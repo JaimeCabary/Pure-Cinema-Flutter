@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
 import '../services/database_service.dart';
+import '../widgets/movie_card.dart';
 import 'watch_screen.dart';
 
 class WatchlistScreen extends StatefulWidget {
@@ -30,6 +30,11 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _removeMovie(Movie movie) async {
+    await DatabaseService.removeFromWatchlist(movie.id);
+    _loadWatchlist();
   }
 
   @override
@@ -86,24 +91,22 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                             itemCount: _savedMovies.length,
                             itemBuilder: (ctx, index) {
                               final movie = _savedMovies[index];
-                              return GestureDetector(
+                              return MovieCard(
+                                movie: movie,
+                                isInWatchlist: true,
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
                                   );
                                 },
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    color: const Color(0xFF141414),
-                                    child: CachedNetworkImage(
-                                      imageUrl: movie.posterUrl,
-                                      fit: BoxFit.cover,
-                                      errorWidget: (context, url, error) => Container(color: Colors.black),
-                                    ),
-                                  ),
-                                ),
+                                onPlay: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                                  );
+                                },
+                                onToggleWatchlist: () => _removeMovie(movie),
                               );
                             },
                           ),

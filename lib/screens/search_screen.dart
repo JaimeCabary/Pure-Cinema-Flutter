@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
 import '../services/tmdb_service.dart';
+import '../services/database_service.dart';
+import '../widgets/movie_card.dart';
 import 'watch_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -16,11 +17,33 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Movie> _results = [];
   bool _isLoading = false;
+  final Set<int> _watchlist = {};
 
   @override
   void initState() {
     super.initState();
     _performSearch('');
+    _loadWatchlist();
+  }
+
+  Future<void> _loadWatchlist() async {
+    final list = await DatabaseService.getWatchlist();
+    if (mounted) {
+      setState(() {
+        _watchlist.clear();
+        _watchlist.addAll(list.map((m) => m.id));
+      });
+    }
+  }
+
+  Future<void> _toggleWatchlist(Movie movie) async {
+    if (_watchlist.contains(movie.id)) {
+      await DatabaseService.removeFromWatchlist(movie.id);
+      setState(() => _watchlist.remove(movie.id));
+    } else {
+      await DatabaseService.addToWatchlist(movie);
+      setState(() => _watchlist.add(movie.id));
+    }
   }
 
   Future<void> _performSearch(String query) async {
@@ -88,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // Grid Results
+            // Grid Results with Hover Details
             Expanded(
               child: _isLoading
                   ? const Center(
@@ -112,24 +135,23 @@ class _SearchScreenState extends State<SearchScreen> {
                           itemCount: _results.length,
                           itemBuilder: (ctx, index) {
                             final movie = _results[index];
-                            return GestureDetector(
+                            final isInList = _watchlist.contains(movie.id);
+                            return MovieCard(
+                              movie: movie,
+                              isInWatchlist: isInList,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
                                 );
                               },
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  color: const Color(0xFF141414),
-                                  child: CachedNetworkImage(
-                                    imageUrl: movie.posterUrl,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) => Container(color: Colors.black),
-                                  ),
-                                ),
-                              ),
+                              onPlay: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                                );
+                              },
+                              onToggleWatchlist: () => _toggleWatchlist(movie),
                             );
                           },
                         ),

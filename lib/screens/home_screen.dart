@@ -5,6 +5,7 @@ import '../models/movie.dart';
 import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
 import '../widgets/cinema_logo.dart';
+import '../widgets/movie_card.dart';
 import 'watch_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -466,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildContentRow(String title, List<Movie> movies) {
     if (movies.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -484,32 +485,27 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 165,
+            height: 195,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: movies.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
               itemBuilder: (ctx, index) {
                 final movie = movies[index];
-                return GestureDetector(
+                final isInList = _watchlist.contains(movie.id);
+                return MovieCard(
+                  movie: movie,
+                  isInWatchlist: isInList,
                   onTap: () => _showMovieDetails(movie),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: 110,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF141414),
-                        border: Border.all(color: const Color(0xFF222222)),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: CachedNetworkImage(
-                        imageUrl: movie.posterUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Container(color: const Color(0xFF141414)),
-                      ),
-                    ),
-                  ),
+                  onPlay: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                    );
+                  },
+                  onToggleWatchlist: () => _toggleWatchlist(movie),
                 );
               },
             ),
