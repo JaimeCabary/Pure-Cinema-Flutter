@@ -8,7 +8,8 @@ import '../services/iptv_service.dart';
 
 class LiveTVScreen extends StatefulWidget {
   final LiveChannel? initialChannel;
-  const LiveTVScreen({super.key, this.initialChannel});
+  final bool isActive;
+  const LiveTVScreen({super.key, this.initialChannel, this.isActive = true});
 
   @override
   State<LiveTVScreen> createState() => _LiveTVScreenState();
@@ -38,7 +39,27 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   void initState() {
     super.initState();
     _activeChannel = widget.initialChannel ?? IPTVService.channels.first;
-    _initPlayer(_activeChannel.streamUrl);
+    if (widget.isActive) {
+      _initPlayer(_activeChannel.streamUrl);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveTVScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      if (!widget.isActive) {
+        _videoController?.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        if (_videoController == null) {
+          _initPlayer(_activeChannel.streamUrl);
+        } else {
+          _videoController?.play();
+          setState(() => _isPlaying = true);
+        }
+      }
+    }
   }
 
   Future<void> _initPlayer(String url) async {

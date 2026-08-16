@@ -22,8 +22,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('user_name') ?? 'Shalom';
-      _userRole = prefs.getString('user_role') ?? 'Head & PM / Frontend Lead';
+      _userName = prefs.getString('user_name') ?? 'User';
+      _userRole = prefs.getString('user_role') ?? 'Premium Member';
     });
   }
 

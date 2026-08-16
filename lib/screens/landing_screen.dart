@@ -41,16 +41,16 @@ class _LandingScreenState extends State<LandingScreen> {
 
         if (_keyBuffer.contains('shalom')) {
           _keyBuffer = '';
-          _enterAppAsShalom();
+          _enterAppAsUser();
         }
       }
     }
   }
 
-  Future<void> _enterAppAsShalom() async {
+  Future<void> _enterAppAsUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', 'Shalom');
-    await prefs.setString('user_role', 'Head & PM / Frontend Lead');
+    await prefs.setString('user_name', 'User');
+    await prefs.setString('user_role', 'Premium Member');
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
@@ -119,7 +119,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   children: [
                     // Top Bar Logo (Uses Web Animated Cinema Logo)
                     GestureDetector(
-                      onDoubleTap: _enterAppAsShalom,
+                      onDoubleTap: _enterAppAsUser,
                       child: Row(
                         children: [
                           const CinemaLogoWidget(size: 26, animate: true),

@@ -17,27 +17,19 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _currentIndex;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    LiveTVScreen(),
-    SearchScreen(),
-    WatchlistScreen(),
-    DownloadsScreen(),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: [
+          const HomeScreen(),
+          LiveTVScreen(isActive: _currentIndex == 1),
+          const SearchScreen(),
+          const WatchlistScreen(),
+          const DownloadsScreen(),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

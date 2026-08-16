@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/movie.dart';
+import '../models/cast_member.dart';
 
 class TMDBService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
   static const String _apiKey = '119f057993052814896eff7bb55e03db';
 
-  static final Map<String, List<Movie>> _cache = {};
+  static final Map<String, dynamic> _cache = {};
 
   static final List<Movie> fallbackMovies = [
     Movie(
@@ -86,7 +87,7 @@ class TMDBService {
   static Future<List<Movie>> _fetchEndpoint(String endpoint, [Map<String, String>? params]) async {
     final key = '$endpoint:${params?.toString()}';
     if (_cache.containsKey(key)) {
-      return _cache[key]!;
+      return (_cache[key] as List<Movie>);
     }
 
     try {
@@ -122,5 +123,60 @@ class TMDBService {
   static Future<List<Movie>> searchMovies(String query) async {
     if (query.trim().isEmpty) return fetchPopular();
     return _fetchEndpoint('/search/movie', {'query': query.trim()});
+  }
+
+  static Future<List<Movie>> fetchSimilar(int movieId) => _fetchEndpoint('/movie/$movieId/similar');
+
+  static Future<List<CastMember>> fetchCredits(int movieId) async {
+    final key = 'credits:$movieId';
+    if (_cache.containsKey(key)) {
+      return (_cache[key] as List<CastMember>);
+    }
+
+    try {
+      final uri = Uri.parse('$_baseUrl/movie/$movieId/credits').replace(
+        queryParameters: {'api_key': _apiKey},
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final castList = (data['cast'] as List<dynamic>?)
+                ?.map((item) => CastMember.fromJson(item as Map<String, dynamic>))
+                .take(12)
+                .toList() ??
+            [];
+        _cache[key] = castList;
+        return castList;
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
+  static Future<String?> fetchTrailerKey(int movieId) async {
+    final key = 'trailer:$movieId';
+    if (_cache.containsKey(key)) {
+      return _cache[key] as String?;
+    }
+
+    try {
+      final uri = Uri.parse('$_baseUrl/movie/$movieId/videos').replace(
+        queryParameters: {'api_key': _apiKey},
+      );
+      final response = await http.get(uri).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final results = data['results'] as List<dynamic>? ?? [];
+        final trailer = results.firstWhere(
+          (v) => (v['type'] == 'Trailer' || v['type'] == 'Teaser') && v['site'] == 'YouTube',
+          orElse: () => results.isNotEmpty ? results.first : null,
+        );
+        final trailerKey = trailer != null ? trailer['key'] as String? : null;
+        _cache[key] = trailerKey;
+        return trailerKey;
+      }
+    } catch (_) {}
+
+    return null;
   }
 }

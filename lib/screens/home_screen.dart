@@ -6,6 +6,7 @@ import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
 import '../widgets/cinema_logo.dart';
 import '../widgets/movie_card.dart';
+import '../widgets/movie_details_modal.dart';
 import 'watch_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -76,172 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showMovieDetails(Movie movie) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0C0C0C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0xFF222222), width: 1),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) {
-        final isInList = _watchlist.contains(movie.id);
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.76,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header image & Close
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: CachedNetworkImage(
-                        imageUrl: movie.backdropUrl,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Container(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.black87,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.close, color: Colors.white, size: 18),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Title
-              Text(
-                movie.title,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Badges
-              Row(
-                children: [
-                  Text(
-                    '${movie.matchScore}% Match',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF4ADE80),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    movie.releaseYear,
-                    style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '4K ULTRA HD',
-                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
-                        );
-                      },
-                      icon: const Icon(Icons.play_arrow, color: Colors.black, size: 20),
-                      label: Text(
-                        'PLAY',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  InkWell(
-                    onTap: () {
-                      _toggleWatchlist(movie);
-                      Navigator.pop(ctx);
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white24),
-                        borderRadius: BorderRadius.circular(6),
-                        color: isInList ? Colors.white12 : Colors.transparent,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(isInList ? Icons.check : Icons.add, color: Colors.white, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            isInList ? 'MY LIST' : 'ADD TO LIST',
-                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Overview
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Text(
-                    movie.overview,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.5,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final isInList = _watchlist.contains(movie.id);
+    MovieDetailsModal.show(context, movie, isInList, () => _toggleWatchlist(movie));
   }
 
   @override
@@ -282,13 +119,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Hero Section
+          // Hero Section with Top Alignment (No Cutting)
           if (_heroMovie != null)
             SliverToBoxAdapter(
               child: _buildHeroSection(_heroMovie!),
             ),
 
-          // Content Carousels with Bottom Clearance
+          // Content Carousels
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 60),
@@ -311,21 +148,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeroSection(Movie movie) {
     final isInList = _watchlist.contains(movie.id);
+
     return SizedBox(
-      height: 420,
+      height: 440,
       width: double.infinity,
       child: Stack(
         children: [
-          // Backdrop Image
+          // Backdrop Image with topCenter Alignment (Never cuts top artwork)
           Positioned.fill(
             child: CachedNetworkImage(
               imageUrl: movie.backdropUrl,
               fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
               errorWidget: (context, url, error) => Container(color: Colors.black),
             ),
           ),
 
-          // Deep Gradient Masks
+          // Smooth Multi-Stop Gradient Masks
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -333,11 +172,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black54,
+                    Colors.black45,
                     Colors.transparent,
+                    Color(0xBB050505),
                     Color(0xFF050505),
                   ],
-                  stops: [0.0, 0.4, 1.0],
+                  stops: [0.0, 0.25, 0.75, 1.0],
                 ),
               ),
             ),
@@ -416,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       ),
                       onPressed: () {
@@ -431,12 +271,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => _toggleWatchlist(movie),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.white24),
                           borderRadius: BorderRadius.circular(6),
@@ -447,8 +287,31 @@ class _HomeScreenState extends State<HomeScreen> {
                             Icon(isInList ? Icons.check : Icons.add, color: Colors.white, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              isInList ? 'MY LIST' : 'ADD TO LIST',
+                              isInList ? 'MY LIST' : 'ADD',
                               style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => _showMovieDetails(movie),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white24),
+                          borderRadius: BorderRadius.circular(6),
+                          color: const Color(0xFF141414),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              'DETAILS',
+                              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
