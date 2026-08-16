@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:video_player/video_player.dart';
 import '../models/movie.dart';
 import '../models/cast_member.dart';
 import '../services/tmdb_service.dart';
@@ -46,11 +47,46 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   bool _isLoadingDetails = true;
   late bool _isInList;
 
+  // Trailer Auto-play Controller
+  VideoPlayerController? _trailerController;
+  bool _isTrailerReady = false;
+  bool _isMuted = true;
+
+  // High-def sample cinematic preview streams
+  static final List<String> _sampleTrailers = [
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+  ];
+
   @override
   void initState() {
     super.initState();
     _isInList = widget.isInWatchlist;
     _loadCreditsAndSimilar();
+    _initTrailerPlayer();
+  }
+
+  Future<void> _initTrailerPlayer() async {
+    // Select sample trailer stream deterministically by movie ID
+    final trailerIndex = widget.movie.id.abs() % _sampleTrailers.length;
+    final streamUrl = _sampleTrailers[trailerIndex];
+
+    try {
+      _trailerController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+      await _trailerController!.initialize();
+      _trailerController!.setLooping(true);
+      _trailerController!.setVolume(0.0); // Start muted for compliant autoplay
+      await _trailerController!.play();
+      if (mounted) {
+        setState(() {
+          _isTrailerReady = true;
+        });
+      }
+    } catch (_) {
+      // Fallback cleanly to backdrop image if video fails to stream
+    }
   }
 
   Future<void> _loadCreditsAndSimilar() async {
@@ -64,6 +100,21 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
         _cast = results[0] as List<CastMember>;
         _similar = results[1] as List<Movie>;
         _isLoadingDetails = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _trailerController?.dispose();
+    super.dispose();
+  }
+
+  void _toggleMute() {
+    if (_trailerController != null && _isTrailerReady) {
+      setState(() {
+        _isMuted = !_isMuted;
+        _trailerController!.setVolume(_isMuted ? 0.0 : 1.0);
       });
     }
   }
@@ -97,18 +148,42 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hero Backdrop & Close Button
+                  // Hero Trailer Auto-play & Backdrop Player
                   Stack(
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: AspectRatio(
                           aspectRatio: 16 / 9,
-                          child: CachedNetworkImage(
-                            imageUrl: movie.backdropUrl,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                            errorWidget: (_, __, ___) => Container(color: Colors.black),
+                          child: Stack(
+                            children: [
+                              // Backdrop Image Placeholder
+                              Positioned.fill(
+                                child: CachedNetworkImage(
+                                  imageUrl: movie.backdropUrl,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  errorWidget: (_, __, ___) => Container(color: Colors.black),
+                                ),
+                              ),
+
+                              // Autoplay Video Layer
+                              if (_isTrailerReady && _trailerController != null)
+                                Positioned.fill(
+                                  child: AnimatedOpacity(
+                                    opacity: _isTrailerReady ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    child: FittedBox(
+                                      fit: BoxFit.cover,
+                                      child: SizedBox(
+                                        width: _trailerController!.value.size.width,
+                                        height: _trailerController!.value.size.height,
+                                        child: VideoPlayer(_trailerController!),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -127,7 +202,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                       ),
 
-                      // Close Button
+                      // Close Button (Top Right)
                       Positioned(
                         top: 10,
                         right: 10,
@@ -144,7 +219,45 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                       ),
 
-                      // Play Trailer Floating Button
+                      // Mute / Unmute Audio Toggle (Top Left)
+                      if (_isTrailerReady)
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: GestureDetector(
+                            onTap: _toggleMute,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.white24, width: 0.8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isMuted ? Icons.volume_off : Icons.volume_up,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isMuted ? 'UNMUTE' : 'MUTE',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Fullscreen Watch Preview Floating Button (Bottom Left)
                       Positioned(
                         bottom: 12,
                         left: 12,
@@ -167,7 +280,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                                 const Icon(Icons.play_arrow, color: Colors.black, size: 18),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'TRAILER / PLAY',
+                                  'PLAY MOVIE',
                                   style: GoogleFonts.outfit(
                                     color: Colors.black,
                                     fontSize: 11,
