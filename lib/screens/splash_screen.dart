@@ -17,8 +17,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
-  // Iconic Harry Potter Cinematic Backdrop
-  static const String _harryPotterPoster = 'https://image.tmdb.org/t/p/original/5rrGVmRUuNZwnioYQfTI9zzdUT.jpg';
+  // Iconic Harry Potter / Cinematic Backdrop
+  static const String _harryPotterPoster = 'https://image.tmdb.org/t/p/original/1stU2qFa47v6t9vKq1t6iT5m7vG.jpg';
 
   @override
   void initState() {

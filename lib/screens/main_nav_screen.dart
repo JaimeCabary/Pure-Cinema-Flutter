@@ -18,6 +18,12 @@ class _MainNavScreenState extends State<MainNavScreen> {
   late int _currentIndex;
 
   @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
