@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -22,15 +23,42 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Movie> _nowPlaying = [];
   List<Movie> _topRated = [];
   List<Movie> _animation = [];
-  Movie? _heroMovie;
+  List<Movie> _heroMovies = [];
+  
+  int _currentHeroIndex = 0;
+  late final PageController _heroPageController;
+  Timer? _heroTimer;
+
   bool _isLoading = true;
   final Set<int> _watchlist = {};
 
   @override
   void initState() {
     super.initState();
+    _heroPageController = PageController();
     _loadData();
     _loadWatchlist();
+  }
+
+  @override
+  void dispose() {
+    _heroTimer?.cancel();
+    _heroPageController.dispose();
+    super.dispose();
+  }
+
+  void _startHeroTimer() {
+    _heroTimer?.cancel();
+    if (_heroMovies.length <= 1) return;
+    _heroTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
+      if (!mounted || !_heroPageController.hasClients) return;
+      final nextIndex = (_currentHeroIndex + 1) % _heroMovies.length;
+      _heroPageController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOutCubic,
+      );
+    });
   }
 
   Future<void> _loadWatchlist() async {
@@ -69,11 +97,25 @@ class _HomeScreenState extends State<HomeScreen> {
       _nowPlaying = results[2];
       _topRated = results[3];
       _animation = results[4];
-      if (_trending.isNotEmpty) {
-        _heroMovie = _trending.first;
+      
+      // Combine top distinctive hit blockbusters for the hero carousel (Not just Spider-Man)
+      final Set<int> added = {};
+      _heroMovies = [];
+      
+      // Pick top diverse blockbuster titles
+      final pool = [..._trending, ..._popular, ..._topRated];
+      for (final m in pool) {
+        if (!added.contains(m.id) && m.backdropPath != null && m.backdropPath!.isNotEmpty) {
+          added.add(m.id);
+          _heroMovies.add(m);
+          if (_heroMovies.length >= 6) break;
+        }
       }
+
       _isLoading = false;
     });
+
+    _startHeroTimer();
   }
 
   void _showMovieDetails(Movie movie) {
@@ -119,10 +161,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Hero Section with Top Alignment (No Cutting)
-          if (_heroMovie != null)
+          // Alternating Multi-Hit Hero Carousel
+          if (_heroMovies.isNotEmpty)
             SliverToBoxAdapter(
-              child: _buildHeroSection(_heroMovie!),
+              child: _buildHeroCarousel(),
             ),
 
           // Content Carousels
@@ -146,11 +188,65 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeroSection(Movie movie) {
+  Widget _buildHeroCarousel() {
+    return SizedBox(
+      height: 450,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          // Hero PageView (Swipeable & Alternating)
+          PageView.builder(
+            controller: _heroPageController,
+            itemCount: _heroMovies.length,
+            onPageChanged: (index) {
+              setState(() => _currentHeroIndex = index);
+              _startHeroTimer(); // Reset auto-scroll timer on manual swipe
+            },
+            itemBuilder: (context, index) {
+              final movie = _heroMovies[index];
+              return _buildHeroSlide(movie);
+            },
+          ),
+
+          // Pagination Pill Indicator (Top Right of Hero)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24, width: 0.6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(_heroMovies.length, (dotIndex) {
+                  final isActive = dotIndex == _currentHeroIndex;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                    width: isActive ? 16 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isActive ? Colors.white : Colors.white30,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSlide(Movie movie) {
     final isInList = _watchlist.contains(movie.id);
 
     return SizedBox(
-      height: 440,
+      height: 450,
       width: double.infinity,
       child: Stack(
         children: [

@@ -39,6 +39,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   void initState() {
     super.initState();
     _activeChannel = widget.initialChannel ?? IPTVService.channels.first;
+    _isInitializing = widget.isActive;
     if (widget.isActive) {
       _initPlayer(_activeChannel.streamUrl);
     }
@@ -63,12 +64,17 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   }
 
   Future<void> _initPlayer(String url) async {
+    if (!widget.isActive) return;
     setState(() => _isInitializing = true);
     await _videoController?.dispose();
 
     _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
     try {
       await _videoController!.initialize();
+      if (!widget.isActive || !mounted) {
+        await _videoController?.pause();
+        return;
+      }
       _videoController!.setLooping(true);
       _videoController!.setVolume(_isMuted ? 0.0 : _volume);
       _videoController!.play();
