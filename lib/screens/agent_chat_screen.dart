@@ -126,24 +126,19 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
         children: [
           if (!isUser) ...[
             Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  colors: [Color(0xFFE50914), Color(0xFF7928CA)],
-                  center: Alignment(-0.2, -0.3),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.6), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.purple.withValues(alpha: 0.5),
-                    blurRadius: 10,
-                  ),
-                ],
+                border: Border.all(color: const Color(0xFF636366), width: 1.0),
               ),
               child: const Center(
-                child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: 22),
+                child: Icon(Icons.smart_toy_rounded, color: Color(0xFFF2F2F7), size: 20),
               ),
             ),
             const SizedBox(width: 10),
@@ -244,25 +239,21 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
           ),
           title: Row(
             children: [
-              // Big Robot Avatar in Header
+              // Silicon Metal Robot Avatar in Header
               Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const RadialGradient(
-                    colors: [Color(0xFFE50914), Color(0xFF7928CA)],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  border: Border.all(color: Colors.cyanAccent, width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.cyanAccent.withValues(alpha: 0.5),
-                      blurRadius: 8,
-                    ),
-                  ],
+                  border: Border.all(color: const Color(0xFF636366), width: 1.0),
                 ),
                 child: const Center(
-                  child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: 22),
+                  child: Icon(Icons.smart_toy_rounded, color: Color(0xFFF2F2F7), size: 22),
                 ),
               ),
               const SizedBox(width: 10),
@@ -280,7 +271,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                         width: 6,
                         height: 6,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF00FF66),
+                          color: Color(0xFF0A84FF),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -288,7 +279,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                   ),
                   Text(
                     'Powered by Google GenAI ADK',
-                    style: AppFonts.sCoreDream(fontSize: 10, color: Colors.purpleAccent),
+                    style: AppFonts.sCoreDream(fontSize: 10, color: Colors.white54),
                   ),
                 ],
               ),

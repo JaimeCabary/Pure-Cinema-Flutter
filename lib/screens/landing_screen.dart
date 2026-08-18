@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
-import 'auth_screen.dart';
+import '../theme/fonts.dart';
+import 'sign_in_screen.dart';
+import 'sign_up_screen.dart';
 import 'main_nav_screen.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -31,8 +31,8 @@ class _LandingScreenState extends State<LandingScreen> {
     super.dispose();
   }
 
-  void _handleKey(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
+  void _handleKey(KeyEvent event) {
+    if (event is KeyDownEvent) {
       final character = event.character;
       if (character != null && character.length == 1 && RegExp(r'[a-zA-Z]').hasMatch(character)) {
         _keyBuffer += character.toLowerCase();
@@ -60,9 +60,15 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  void _openAuthScreen(AuthMode mode) {
+  void _openSignIn() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AuthScreen(initialMode: mode)),
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+    );
+  }
+
+  void _openSignUp() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SignUpScreen()),
     );
   }
 
@@ -78,9 +84,9 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return RawKeyboardListener(
+    return KeyboardListener(
       focusNode: _focusNode,
-      onKey: _handleKey,
+      onKeyEvent: _handleKey,
       child: Scaffold(
         backgroundColor: const Color(0xFF050505),
         body: Stack(
@@ -131,7 +137,7 @@ class _LandingScreenState extends State<LandingScreen> {
                           const SizedBox(width: 10),
                           Text(
                             'PURE CINEMA',
-                            style: GoogleFonts.outfit(
+                            style: AppFonts.sCoreDream(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -144,30 +150,30 @@ class _LandingScreenState extends State<LandingScreen> {
 
                     const Spacer(),
 
-                    // Hero Headlines
+                    // Hero Headlines in sCore Dream Medium
                     Text(
                       'UNCOMPROMISED\nCINEMA 4K',
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: Colors.white,
                         fontSize: 34,
-                        fontWeight: FontWeight.w900,
-                        height: 1.05,
-                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w500, // sCore Dream Medium
+                        height: 1.12,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Experience master-quality motion pictures, 60 FPS live broadcast suite, and curated visual arts.',
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: Colors.white70,
                         fontSize: 13,
                         fontWeight: FontWeight.w300,
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // Sign In / Register Button (Primary)
+                    // Sign In Button (Primary White)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -180,10 +186,10 @@ class _LandingScreenState extends State<LandingScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        onPressed: () => _openAuthScreen(AuthMode.signIn),
+                        onPressed: _openSignIn,
                         child: Text(
                           'SIGN IN',
-                          style: GoogleFonts.outfit(
+                          style: AppFonts.sCoreDream(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2.0,
@@ -194,14 +200,41 @@ class _LandingScreenState extends State<LandingScreen> {
 
                     const SizedBox(height: 12),
 
-                    // Enter as Guest Button (Secondary)
+                    // Create Account Button (Secondary Red/Dark)
                     SizedBox(
                       width: double.infinity,
-                      height: 46,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE50914),
+                          foregroundColor: Colors.white,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _openSignUp,
+                        child: Text(
+                          'CREATE ACCOUNT',
+                          style: AppFonts.sCoreDream(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Enter as Guest Button (Outline)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF333333)),
-                          backgroundColor: const Color(0x66141414),
+                          backgroundColor: const Color(0x33141414),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -209,7 +242,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         onPressed: _enterAppGuest,
                         child: Text(
                           'ENTER AS GUEST',
-                          style: GoogleFonts.outfit(
+                          style: AppFonts.sCoreDream(
                             color: Colors.white70,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -219,7 +252,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

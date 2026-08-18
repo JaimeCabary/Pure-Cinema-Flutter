@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import auth, movies, watchlist, agent, iptv
+from app.routers import auth, movies, watchlist, agent, iptv, payment
 
 app = FastAPI(
     title="Pure Cinema API Backend",
@@ -24,6 +24,7 @@ app.include_router(movies.router)
 app.include_router(watchlist.router)
 app.include_router(agent.router)
 app.include_router(iptv.router)
+app.include_router(payment.router)
 
 @app.get("/")
 @app.get("/health")

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../theme/fonts.dart';
 import 'home_screen.dart';
 import 'live_tv_screen.dart';
 import 'search_screen.dart';
@@ -18,6 +18,14 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _currentIndex;
 
+  final List<Map<String, dynamic>> _navItems = [
+    {'icon': Icons.home_filled, 'label': 'Home'},
+    {'icon': Icons.live_tv_rounded, 'label': 'Live TV', 'isLive': true},
+    {'icon': Icons.search_rounded, 'label': 'Search'},
+    {'icon': Icons.bookmark_rounded, 'label': 'Watchlist'},
+    {'icon': Icons.download_rounded, 'label': 'Downloads'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +36,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
+      extendBody: true,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -40,82 +49,105 @@ class _MainNavScreenState extends State<MainNavScreen> {
       ),
       floatingActionButton: AIAgentFab(
         onNavigateTab: (index) {
-          if (index >= 0 && index < 5) {
+          if (index >= 0 && index < _navItems.length) {
             setState(() => _currentIndex = index);
           }
         },
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF080808),
-          border: Border(
-            top: BorderSide(color: Color(0xFF1C1C1E), width: 0.8),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          bottom: true,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 6, bottom: 4),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              // Dark obsidian floating capsule container
+              color: const Color(0xFF0C120F),
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(
+                color: const Color(0xFF1E2822),
+                width: 1.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: const Offset(0, -1),
+                ),
+              ],
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.home_filled, 'Home'),
-                _buildNavItem(1, Icons.live_tv_rounded, 'Live TV', isLive: true),
-                _buildNavItem(2, Icons.search_rounded, 'Search'),
-                _buildNavItem(3, Icons.bookmark_border_rounded, 'Watchlist'),
-                _buildNavItem(4, Icons.download_rounded, 'Downloads'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+              children: List.generate(_navItems.length, (index) {
+                final item = _navItems[index];
+                final isSelected = _currentIndex == index;
 
-  Widget _buildNavItem(int index, IconData icon, String label, {bool isLive = false}) {
-    final isSelected = _currentIndex == index;
-    return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: isSelected ? Colors.white : Colors.white38,
-                ),
-                if (isLive)
-                  Positioned(
-                    top: -1,
-                    right: -3,
-                    child: Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: Colors.redAccent,
-                        shape: BoxShape.circle,
-                      ),
+                return GestureDetector(
+                  onTap: () => setState(() => _currentIndex = index),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    padding: isSelected
+                        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+                        : const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      // Active selected: White pill with black text/icons (as in screenshot)
+                      color: isSelected ? Colors.white : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              item['icon'] as IconData,
+                              size: 20,
+                              color: isSelected ? Colors.black : Colors.white60,
+                            ),
+                            if (item['isLive'] == true && !isSelected)
+                              Positioned(
+                                top: -1,
+                                right: -2,
+                                child: Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFE50914),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            item['label'] as String,
+                            style: AppFonts.sCoreDream(
+                              color: Colors.black,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-              ],
+                );
+              }),
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected ? Colors.white : Colors.white38,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

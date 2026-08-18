@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/cinema_logo.dart';
-import 'landing_screen.dart';
+import '../theme/fonts.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LandingScreen(),
+            pageBuilder: (_, __, ___) => const OnboardingScreen(),
             transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
             transitionDuration: const Duration(milliseconds: 400),
           ),
@@ -110,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     // Brand Typography
                     Text(
                       'PURE CINEMA',
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: Colors.white,
                         fontSize: 26,
                         fontWeight: FontWeight.w900,
@@ -119,12 +119,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     ),
                     const SizedBox(height: 8),
 
+                    // Subtitle in sCore Dream Medium Thickness
                     Text(
                       'UNCOMPROMISED 4K STREAMING',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white60,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                      style: AppFonts.sCoreDream(
+                        color: Colors.white70,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500, // Medium thickness
                         letterSpacing: 3.0,
                       ),
                     ),
@@ -153,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             child: Center(
               child: Text(
                 'PURE CINEMA STUDIOS · 2026',
-                style: GoogleFonts.outfit(
+                style: AppFonts.sCoreDream(
                   color: Colors.white24,
                   fontSize: 9,
                   letterSpacing: 2.0,

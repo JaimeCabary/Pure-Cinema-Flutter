@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
+import '../widgets/subscription_modal.dart';
+import '../theme/fonts.dart';
 import 'auth_screen.dart';
 import 'landing_screen.dart';
 
@@ -320,6 +322,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 12),
 
+        // VIP Subscription Option
+        _buildMenuOption(
+          icon: Icons.workspace_premium_rounded,
+          title: 'Pure Cinema VIP Pass',
+          subtitle: 'Upgrade to 4K Master streaming & Dolby Atmos',
+          onTap: () => SubscriptionModal.show(context),
+        ),
+
         _buildMenuOption(
           icon: Icons.shield_outlined,
           title: 'Email Security & Verification',
@@ -330,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: const Color(0xFF181818),
                 content: Text(
                   'Email ${user.email} is verified and secured.',
-                  style: GoogleFonts.outfit(color: Colors.white),
+                  style: AppFonts.sCoreDream(color: Colors.white),
                 ),
               ),
             );

@@ -598,33 +598,6 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  '60 FPS · 1080p',
-                  style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 10),
-                ),
-                const SizedBox(width: 8),
-                // VLC Network Stream Button
-                GestureDetector(
-                  onTap: _openVlcStreamDialog,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.add_link_rounded, color: Colors.white, size: 14),
-                        const SizedBox(width: 4),
-                        Text(
-                          'VLC STREAM',
-                          style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 6),
                 // Fullscreen Button
                 GestureDetector(
@@ -950,6 +923,20 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     );
   }
 
+  static String getCountryFlagEmoji(String countryCode) {
+    if (countryCode == 'All' || countryCode.isEmpty) return '🌐';
+    String code = countryCode.toUpperCase();
+    if (code == 'UK') code = 'GB';
+    if (code.length != 2) return '🌐';
+    try {
+      final int first = code.codeUnitAt(0) - 0x41 + 0x1F1E6;
+      final int second = code.codeUnitAt(1) - 0x41 + 0x1F1E6;
+      return String.fromCharCode(first) + String.fromCharCode(second);
+    } catch (_) {
+      return '🌐';
+    }
+  }
+
   Widget _buildGuideHeader(int channelCount) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -972,45 +959,19 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               ],
             ],
           ),
-          Row(
-            children: [
-              // Custom Stream Button
-              GestureDetector(
-                onTap: _openVlcStreamDialog,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE50914).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFE50914).withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.add, color: Color(0xFFE50914), size: 12),
-                      const SizedBox(width: 2),
-                      Text(
-                        'URL STREAM',
-                        style: AppFonts.sCoreDream(color: const Color(0xFFE50914), fontSize: 9, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
+          GestureDetector(
+            onTap: () => setState(() => _isChannelListCollapsed = true),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$channelCount Channels',
+                  style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => setState(() => _isChannelListCollapsed = true),
-                child: Row(
-                  children: [
-                    Text(
-                      '$channelCount Channels',
-                      style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white38, size: 16),
-                  ],
-                ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white38, size: 16),
+              ],
+            ),
           ),
         ],
       ),
@@ -1067,6 +1028,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
         itemBuilder: (ctx, index) {
           final country = IPTVService.countries[index];
           final isSel = _selectedCountry == country;
+          final flag = getCountryFlagEmoji(country);
           return GestureDetector(
             onTap: () => setState(() => _selectedCountry = country),
             child: Container(
@@ -1080,10 +1042,10 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               ),
               child: Center(
                 child: Text(
-                  country == 'All' ? '🌐 ALL REGIONS' : '🚩 $country',
+                  country == 'All' ? '🌐 ALL REGIONS' : '$flag $country',
                   style: AppFonts.sCoreDream(
-                    color: isSel ? const Color(0xFFE50914) : Colors.white54,
-                    fontSize: 9.5,
+                    color: isSel ? const Color(0xFFE50914) : Colors.white70,
+                    fontSize: 10,
                     fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -1213,8 +1175,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               if (channel.country != null) ...[
                 const SizedBox(width: 6),
                 Text(
-                  '• ${channel.country}',
-                  style: AppFonts.sCoreDream(color: Colors.white24, fontSize: 9),
+                  '• ${getCountryFlagEmoji(channel.country!)} ${channel.country}',
+                  style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 9.5),
                 ),
               ],
             ],
