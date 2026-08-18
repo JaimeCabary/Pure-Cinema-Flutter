@@ -8,20 +8,25 @@ class AuthService {
   static const String _userKey = 'pure_cinema_auth_user';
   static const String _tokenKey = 'pure_cinema_auth_token';
 
+  static const String _productionUrl = 'https://pure-cinema-backend.onrender.com';
   static const List<String> _candidateUrls = [
+    'https://pure-cinema-backend.onrender.com',
     'http://localhost:3000',
-    'http://localhost:3001',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
   ];
 
-  static String _activeBaseUrl = 'http://localhost:3000';
+  static String _activeBaseUrl = 'https://pure-cinema-backend.onrender.com';
 
   static String get baseUrl {
-    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
-      return 'http://${Uri.base.host}:3000';
+    if (kIsWeb) {
+      if (Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+        if (RegExp(r'^\d+\.\d+\.\d+\.\d+$').hasMatch(Uri.base.host)) {
+          return 'http://${Uri.base.host}:3000';
+        }
+      }
+      return _productionUrl;
     }
-    return _activeBaseUrl;
+    return _productionUrl;
   }
 
   /// Helper to send request trying candidate ports if connection refused

@@ -35,12 +35,18 @@ class SubscriptionPlan {
 }
 
 class PaymentService {
+  static const String _productionUrl = 'https://pure-cinema-backend.onrender.com/api/payment';
+
   static String get baseUrl {
     if (kIsWeb) {
-      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
-      return 'http://$host:3000/api/payment';
+      if (Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+        if (RegExp(r'^\d+\.\d+\.\d+\.\d+$').hasMatch(Uri.base.host)) {
+          return 'http://${Uri.base.host}:3000/api/payment';
+        }
+      }
+      return _productionUrl;
     }
-    return 'http://10.0.2.2:3000/api/payment';
+    return _productionUrl;
   }
 
   // Fallback / Default VIP plans
