@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../models/movie.dart';
+import '../theme/fonts.dart';
 
 class WatchScreen extends StatefulWidget {
   final Movie movie;
@@ -18,7 +18,7 @@ class _WatchScreenState extends State<WatchScreen> {
   bool _isInitialized = false;
   bool _showControls = true;
   bool _isMuted = false;
-  double _volume = 1.0;
+  final double _volume = 1.0;
   Timer? _hideTimer;
   
   // Indicator badge
@@ -39,6 +39,7 @@ class _WatchScreenState extends State<WatchScreen> {
 
     _controller = VideoPlayerController.networkUrl(Uri.parse(_demoStream))
       ..initialize().then((_) {
+        if (!mounted) return;
         setState(() => _isInitialized = true);
         _controller.play();
         _controller.setLooping(true);
@@ -148,7 +149,7 @@ class _WatchScreenState extends State<WatchScreen> {
               )
             else
               const Center(
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
               ),
 
             // Indicator Badge Overlay
@@ -156,7 +157,7 @@ class _WatchScreenState extends State<WatchScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.85),
+                  color: Colors.black.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -167,7 +168,7 @@ class _WatchScreenState extends State<WatchScreen> {
                     const SizedBox(height: 6),
                     Text(
                       _indicatorText!,
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -201,11 +202,11 @@ class _WatchScreenState extends State<WatchScreen> {
                                 children: [
                                   Text(
                                     'PURE CINEMA 4K',
-                                    style: GoogleFonts.outfit(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.w900),
+                                    style: AppFonts.sCoreDream(color: const Color(0xFFE50914), fontSize: 10, fontWeight: FontWeight.w900),
                                   ),
                                   Text(
                                     widget.movie.title,
-                                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
@@ -254,8 +255,8 @@ class _WatchScreenState extends State<WatchScreen> {
                                   trackHeight: 3,
                                   thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                                   overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
-                                  thumbColor: Colors.redAccent,
-                                  activeTrackColor: Colors.redAccent,
+                                  thumbColor: const Color(0xFFE50914),
+                                  activeTrackColor: const Color(0xFFE50914),
                                   inactiveTrackColor: Colors.white24,
                                 ),
                                 child: Slider(
@@ -273,11 +274,11 @@ class _WatchScreenState extends State<WatchScreen> {
                               children: [
                                 Text(
                                   _formatDuration(_controller.value.position),
-                                  style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+                                  style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
                                 ),
                                 Text(
                                   _formatDuration(_controller.value.duration),
-                                  style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+                                  style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
                                 ),
                               ],
                             ),

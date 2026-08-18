@@ -7,7 +7,6 @@ import '../models/movie.dart';
 class DatabaseService {
   static const String _watchlistKey = 'pure_cinema_watchlist';
   static const String _historyKey = 'pure_cinema_history';
-  static const String _userKey = 'pure_cinema_user';
 
   // ── Watchlist Operations (mirrors Prisma MovieWatchlist) ──
   static Future<List<Movie>> getWatchlist() async {

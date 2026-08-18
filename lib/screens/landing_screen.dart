@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
+import 'auth_screen.dart';
 import 'main_nav_screen.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -41,16 +42,14 @@ class _LandingScreenState extends State<LandingScreen> {
 
         if (_keyBuffer.contains('shalom')) {
           _keyBuffer = '';
-          _enterAppAsUser();
+          _enterAppAsAdmin();
         }
       }
     }
   }
 
-  Future<void> _enterAppAsUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', 'User');
-    await prefs.setString('user_role', 'Premium Member');
+  Future<void> _enterAppAsAdmin() async {
+    await AuthService.login(email: 'shalom', password: '');
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
@@ -61,7 +60,13 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  void _enterApp() {
+  void _openAuthScreen(AuthMode mode) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AuthScreen(initialMode: mode)),
+    );
+  }
+
+  void _enterAppGuest() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const MainNavScreen(),
@@ -117,9 +122,9 @@ class _LandingScreenState extends State<LandingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Bar Logo (Uses Web Animated Cinema Logo)
+                    // Top Bar Logo (Double tap to unlock Shalom admin)
                     GestureDetector(
-                      onDoubleTap: _enterAppAsUser,
+                      onDoubleTap: _enterAppAsAdmin,
                       child: Row(
                         children: [
                           const CinemaLogoWidget(size: 26, animate: true),
@@ -162,7 +167,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Enter Platform Button
+                    // Sign In / Register Button (Primary)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -175,13 +180,40 @@ class _LandingScreenState extends State<LandingScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        onPressed: _enterApp,
+                        onPressed: () => _openAuthScreen(AuthMode.signIn),
                         child: Text(
-                          'ENTER PLATFORM',
+                          'SIGN IN',
                           style: GoogleFonts.outfit(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 2.0,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Enter as Guest Button (Secondary)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF333333)),
+                          backgroundColor: const Color(0x66141414),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _enterAppGuest,
+                        child: Text(
+                          'ENTER AS GUEST',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ),

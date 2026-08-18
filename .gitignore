@@ -1,12 +1,25 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
+# Environment & Secrets
 .env
 .env.*
 *.env
+**/.env
+**/.env.*
+**/*.env
+
+# Python / Virtual Environments
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+backend/.venv/
+
+# Miscellaneous
+*.class
+*.log
+*.swp
+.DS_Store
 .atom/
 .build/
 .buildlog/

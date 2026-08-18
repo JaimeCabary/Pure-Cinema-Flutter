@@ -5,6 +5,7 @@ import 'live_tv_screen.dart';
 import 'search_screen.dart';
 import 'watchlist_screen.dart';
 import 'downloads_screen.dart';
+import '../widgets/ai_agent_fab.dart';
 
 class MainNavScreen extends StatefulWidget {
   final int initialIndex;
@@ -36,6 +37,13 @@ class _MainNavScreenState extends State<MainNavScreen> {
           const WatchlistScreen(),
           const DownloadsScreen(),
         ],
+      ),
+      floatingActionButton: AIAgentFab(
+        onNavigateTab: (index) {
+          if (index >= 0 && index < 5) {
+            setState(() => _currentIndex = index);
+          }
+        },
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

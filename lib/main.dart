@@ -28,6 +28,7 @@ class PureCinemaApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF050505),
         primaryColor: Colors.white,
+        fontFamily: 'sCore Dream',
         colorScheme: const ColorScheme.dark(
           primary: Colors.white,
           secondary: Color(0xFFE50914),
@@ -35,7 +36,7 @@ class PureCinemaApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.outfitTextTheme(
           ThemeData.dark().textTheme,
-        ),
+        ).apply(fontFamily: 'sCore Dream'),
         useMaterial3: true,
       ),
       home: const SplashScreen(),

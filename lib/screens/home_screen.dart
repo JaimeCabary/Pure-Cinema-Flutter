@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
+import '../models/user.dart';
 import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/movie_details_modal.dart';
 import 'watch_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isLoading = true;
   final Set<int> _watchlist = {};
+  User? _currentUser;
 
   @override
   void initState() {
@@ -38,6 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _heroPageController = PageController();
     _loadData();
     _loadWatchlist();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await AuthService.getCurrentUser();
+    if (mounted) {
+      setState(() => _currentUser = user);
+    }
   }
 
   @override
@@ -159,6 +171,43 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentUser?.isAdmin == true
+                        ? const Color(0xFFE50914)
+                        : const Color(0xFF222222),
+                    border: Border.all(
+                      color: _currentUser != null ? Colors.white70 : Colors.white24,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Center(
+                    child: _currentUser != null
+                        ? Text(
+                            _currentUser!.name.isNotEmpty ? _currentUser!.name[0].toUpperCase() : 'U',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : const Icon(Icons.person_outline_rounded, size: 16, color: Colors.white70),
+                  ),
+                ),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  _loadUser();
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
 
           // Alternating Multi-Hit Hero Carousel

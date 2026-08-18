@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import '../models/live_channel.dart';
 import '../services/iptv_service.dart';
+import '../theme/fonts.dart';
 
 class LiveTVScreen extends StatefulWidget {
   final LiveChannel? initialChannel;
@@ -18,11 +19,13 @@ class LiveTVScreen extends StatefulWidget {
 class _LiveTVScreenState extends State<LiveTVScreen> {
   late LiveChannel _activeChannel;
   String _selectedCategory = 'All Channels';
+  String _selectedCountry = 'All';
   String _searchQuery = '';
   VideoPlayerController? _videoController;
   bool _isInitializing = true;
   bool _isPlaying = true;
   bool _isMuted = false;
+  bool _hasError = false;
   double _volume = 1.0;
   double _playbackSpeed = 1.0;
   bool _isChannelListCollapsed = false;
@@ -35,11 +38,20 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   IconData? _indicatorIcon;
   Timer? _indicatorTimer;
 
+  // Custom Stream URL controller
+  final TextEditingController _customUrlController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _activeChannel = widget.initialChannel ?? IPTVService.channels.first;
     _isInitializing = widget.isActive;
+    
+    // Load dynamic IPTV-org channels in background
+    IPTVService.loadIPTVOrgChannels(onUpdated: () {
+      if (mounted) setState(() {});
+    });
+
     if (widget.isActive) {
       _initPlayer(_activeChannel.streamUrl);
     }
@@ -65,11 +77,14 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   Future<void> _initPlayer(String url) async {
     if (!widget.isActive) return;
-    setState(() => _isInitializing = true);
+    setState(() {
+      _isInitializing = true;
+      _hasError = false;
+    });
     await _videoController?.dispose();
 
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
     try {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
       await _videoController!.initialize();
       if (!widget.isActive || !mounted) {
         await _videoController?.pause();
@@ -85,12 +100,16 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
         setState(() {
           _isInitializing = false;
           _isPlaying = true;
+          _hasError = false;
         });
         _startHideTimer();
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _isInitializing = false);
+        setState(() {
+          _isInitializing = false;
+          _hasError = true;
+        });
       }
     }
   }
@@ -100,6 +119,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     _hideControlsTimer?.cancel();
     _indicatorTimer?.cancel();
     _videoController?.dispose();
+    _customUrlController.dispose();
     if (_isFullscreen) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -200,6 +220,113 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     _startHideTimer();
   }
 
+  void _openVlcStreamDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF282828)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE50914).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.stream_rounded, color: Color(0xFFE50914), size: 20),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'VLC Network Stream',
+              style: AppFonts.sCoreDream(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Enter any HTTP, HLS (.m3u8), MP4 or IPTV stream URL to play directly:',
+              style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _customUrlController,
+              style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'https://.../stream.m3u8',
+                hintStyle: AppFonts.sCoreDream(color: Colors.white38, fontSize: 12),
+                filled: true,
+                fillColor: const Color(0xFF0A0A0A),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF333333)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFE50914)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              children: [
+                ActionChip(
+                  label: Text('Mux HLS Test', style: AppFonts.sCoreDream(fontSize: 10, color: Colors.white70)),
+                  backgroundColor: const Color(0xFF202020),
+                  onPressed: () => _customUrlController.text = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+                ),
+                ActionChip(
+                  label: Text('Akamai Test', style: AppFonts.sCoreDream(fontSize: 10, color: Colors.white70)),
+                  backgroundColor: const Color(0xFF202020),
+                  onPressed: () => _customUrlController.text = 'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8',
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppFonts.sCoreDream(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE50914),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              final url = _customUrlController.text.trim();
+              if (url.isNotEmpty) {
+                final customChannel = LiveChannel(
+                  id: 'custom-${DateTime.now().millisecondsSinceEpoch}',
+                  name: 'Custom Stream',
+                  logo: 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=100&h=100&fit=crop&q=80',
+                  group: 'Custom',
+                  streamUrl: url,
+                  badge: 'VLC NET',
+                  currentProgram: 'Custom Network Stream',
+                );
+                setState(() => _activeChannel = customChannel);
+                _initPlayer(url);
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text('Stream Now', style: AppFonts.sCoreDream(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDuration(Duration d) {
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -208,7 +335,11 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredChannels = IPTVService.searchChannels(_searchQuery, _selectedCategory);
+    final filteredChannels = IPTVService.getFilteredChannels(
+      category: _selectedCategory,
+      country: _selectedCountry,
+      query: _searchQuery,
+    );
 
     // Fullscreen View
     if (_isFullscreen) {
@@ -301,6 +432,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                           children: [
                             _buildGuideHeader(filteredChannels.length),
                             _buildCategoryTabs(),
+                            _buildCountryChips(),
                             _buildSearchField(),
                             Expanded(child: _buildChannelList(filteredChannels)),
                           ],
@@ -332,6 +464,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                     if (!_isChannelListCollapsed) ...[
                       _buildGuideHeader(filteredChannels.length),
                       _buildCategoryTabs(),
+                      _buildCountryChips(),
                       _buildSearchField(),
                       Expanded(child: _buildChannelList(filteredChannels)),
                     ],
@@ -351,7 +484,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                       icon: const Icon(Icons.list_alt_rounded, size: 18),
                       label: Text(
                         'SHOW CHANNELS',
-                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                        style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
                       ),
                     ),
                   ),
@@ -380,14 +513,54 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               ),
             )
           else if (_isInitializing)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Buffering Live Stream...',
+                    style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            )
+          else if (_hasError)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 36),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Live Stream Offline or Geo-Restricted',
+                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Try another channel or use VLC Network Stream',
+                    style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 11),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE50914),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    ),
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: Text('Retry Stream', style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.bold)),
+                    onPressed: () => _initPlayer(_activeChannel.streamUrl),
+                  ),
+                ],
+              ),
             )
           else
             Center(
               child: Text(
                 'Live Signal Connecting...',
-                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+                style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 12),
               ),
             ),
 
@@ -401,12 +574,12 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent,
+                    color: const Color(0xFFE50914),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'LIVE',
-                    style: GoogleFonts.outfit(
+                    _activeChannel.badge ?? 'LIVE',
+                    style: AppFonts.sCoreDream(
                       color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
@@ -417,7 +590,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 Expanded(
                   child: Text(
                     _activeChannel.name,
-                    style: GoogleFonts.outfit(
+                    style: AppFonts.sCoreDream(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -427,9 +600,32 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 ),
                 Text(
                   '60 FPS · 1080p',
-                  style: GoogleFonts.outfit(color: Colors.white60, fontSize: 10),
+                  style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 10),
                 ),
                 const SizedBox(width: 8),
+                // VLC Network Stream Button
+                GestureDetector(
+                  onTap: _openVlcStreamDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.add_link_rounded, color: Colors.white, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          'VLC STREAM',
+                          style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
                 // Fullscreen Button
                 GestureDetector(
                   onTap: _toggleFullscreen,
@@ -475,8 +671,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                             trackHeight: 2.5,
                             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
                             overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
-                            thumbColor: Colors.redAccent,
-                            activeTrackColor: Colors.redAccent,
+                            thumbColor: const Color(0xFFE50914),
+                            activeTrackColor: const Color(0xFFE50914),
                             inactiveTrackColor: Colors.white24,
                           ),
                           child: Slider(
@@ -501,7 +697,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                             children: [
                               Text(
                                 _formatDuration(_videoController!.value.position),
-                                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10),
+                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 10),
                               ),
                               Row(
                                 children: [
@@ -509,7 +705,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                                     width: 4,
                                     height: 4,
                                     decoration: const BoxDecoration(
-                                      color: Colors.redAccent,
+                                      color: Color(0xFFE50914),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -518,7 +714,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                                     _videoController!.value.duration > Duration.zero
                                         ? _formatDuration(_videoController!.value.duration)
                                         : 'LIVE DVR',
-                                    style: GoogleFonts.outfit(
+                                    style: AppFonts.sCoreDream(
                                       color: Colors.white70,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
@@ -589,7 +785,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 _isChannelListCollapsed ? 'GUIDE' : 'EXPAND',
-                                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -608,7 +804,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                           ),
                           child: Text(
                             '${_playbackSpeed}x',
-                            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -648,7 +844,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           const SizedBox(height: 4),
           Text(
             _indicatorText!,
-            style: GoogleFonts.outfit(
+            style: AppFonts.sCoreDream(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -671,14 +867,14 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(4)),
-            child: Text('LIVE', style: GoogleFonts.outfit(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+            decoration: BoxDecoration(color: const Color(0xFFE50914), borderRadius: BorderRadius.circular(4)),
+            child: Text('LIVE', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _activeChannel.name,
-              style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+              style: AppFonts.sCoreDream(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -719,8 +915,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 trackHeight: 3,
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
-                thumbColor: Colors.redAccent,
-                activeTrackColor: Colors.redAccent,
+                thumbColor: const Color(0xFFE50914),
+                activeTrackColor: const Color(0xFFE50914),
                 inactiveTrackColor: Colors.white24,
               ),
               child: Slider(
@@ -741,7 +937,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             children: [
               Text(
                 _formatDuration(_videoController?.value.position ?? Duration.zero),
-                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
               ),
               IconButton(
                 icon: const Icon(Icons.fullscreen_exit_rounded, color: Colors.white),
@@ -756,26 +952,65 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   Widget _buildGuideHeader(int channelCount) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Channel Guide',
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _isChannelListCollapsed = true),
-            child: Row(
-              children: [
-                Text(
-                  '$channelCount Available',
-                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
+          Row(
+            children: [
+              Text(
+                'Live IPTV Guide',
+                style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              if (IPTVService.isLoading) ...[
+                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 10,
+                  height: 10,
+                  child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 1.5),
                 ),
-                const SizedBox(width: 6),
-                const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white38, size: 16),
               ],
-            ),
+            ],
+          ),
+          Row(
+            children: [
+              // Custom Stream Button
+              GestureDetector(
+                onTap: _openVlcStreamDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFE50914).withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add, color: Color(0xFFE50914), size: 12),
+                      const SizedBox(width: 2),
+                      Text(
+                        'URL STREAM',
+                        style: AppFonts.sCoreDream(color: const Color(0xFFE50914), fontSize: 9, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => setState(() => _isChannelListCollapsed = true),
+                child: Row(
+                  children: [
+                    Text(
+                      '$channelCount Channels',
+                      style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white38, size: 16),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -784,8 +1019,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   Widget _buildCategoryTabs() {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      height: 34,
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -803,12 +1038,54 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: isSel ? Colors.white : const Color(0xFF222222)),
               ),
-              child: Text(
-                cat,
-                style: GoogleFonts.outfit(
-                  color: isSel ? Colors.black : Colors.white70,
-                  fontSize: 10.5,
-                  fontWeight: isSel ? FontWeight.bold : FontWeight.w400,
+              child: Center(
+                child: Text(
+                  cat,
+                  style: AppFonts.sCoreDream(
+                    color: isSel ? Colors.black : Colors.white70,
+                    fontSize: 10.5,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCountryChips() {
+    return Container(
+      height: 28,
+      margin: const EdgeInsets.only(top: 4),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: IPTVService.countries.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 4),
+        itemBuilder: (ctx, index) {
+          final country = IPTVService.countries[index];
+          final isSel = _selectedCountry == country;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCountry = country),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: isSel ? const Color(0xFFE50914).withValues(alpha: 0.25) : const Color(0xFF0F0F0F),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: isSel ? const Color(0xFFE50914) : const Color(0xFF1E1E1E),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  country == 'All' ? '🌐 ALL REGIONS' : '🚩 $country',
+                  style: AppFonts.sCoreDream(
+                    color: isSel ? const Color(0xFFE50914) : Colors.white54,
+                    fontSize: 9.5,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
@@ -820,7 +1097,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       child: Container(
         height: 34,
         decoration: BoxDecoration(
@@ -829,12 +1106,18 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           border: Border.all(color: const Color(0xFF222222)),
         ),
         child: TextField(
-          style: GoogleFonts.outfit(color: Colors.white, fontSize: 12),
+          style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
           onChanged: (v) => setState(() => _searchQuery = v),
           decoration: InputDecoration(
-            hintText: 'Search channels...',
-            hintStyle: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
+            hintText: 'Search 10,000+ IPTV channels...',
+            hintStyle: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
             prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 14),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.white38, size: 14),
+                    onPressed: () => setState(() => _searchQuery = ''),
+                  )
+                : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 8),
           ),
@@ -846,9 +1129,25 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   Widget _buildChannelList(List<LiveChannel> filteredChannels) {
     if (filteredChannels.isEmpty) {
       return Center(
-        child: Text(
-          'No channels found',
-          style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.tv_off_rounded, color: Colors.white24, size: 36),
+            const SizedBox(height: 8),
+            Text(
+              'No channels matching query',
+              style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 12),
+            ),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => setState(() {
+                _selectedCategory = 'All Channels';
+                _selectedCountry = 'All';
+                _searchQuery = '';
+              }),
+              child: Text('Reset Filters', style: AppFonts.sCoreDream(color: const Color(0xFFE50914), fontSize: 11)),
+            ),
+          ],
         ),
       );
     }
@@ -862,37 +1161,94 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
         final isActive = _activeChannel.id == channel.id;
         return ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
           tileColor: isActive ? const Color(0xFF181818) : Colors.transparent,
-          leading: Text(
-            (index + 1).toString().padLeft(2, '0'),
-            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold),
+          leading: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF141414),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: isActive ? const Color(0xFFE50914) : const Color(0xFF222222),
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: channel.logo.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: channel.logo,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Center(
+                        child: Text(
+                          channel.name.substring(0, channel.name.isNotEmpty ? 1 : 0).toUpperCase(),
+                          style: AppFonts.sCoreDream(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        (index + 1).toString().padLeft(2, '0'),
+                        style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+            ),
           ),
           title: Text(
             channel.name,
-            style: GoogleFonts.outfit(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppFonts.sCoreDream(
               color: isActive ? Colors.white : Colors.white70,
               fontSize: 12,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w400,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),
           ),
-          subtitle: Text(
-            channel.group,
-            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+          subtitle: Row(
+            children: [
+              Text(
+                channel.group,
+                style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 10),
+              ),
+              if (channel.country != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  '• ${channel.country}',
+                  style: AppFonts.sCoreDream(color: Colors.white24, fontSize: 9),
+                ),
+              ],
+            ],
           ),
-          trailing: isActive
-              ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (channel.badge != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent,
+                    color: const Color(0xFF222222),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
-                    'LIVE',
-                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                    channel.badge!,
+                    style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 8, fontWeight: FontWeight.bold),
                   ),
-                )
-              : null,
+                ),
+              if (isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Text(
+                    'PLAYING',
+                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
           onTap: () {
             setState(() => _activeChannel = channel);
             _initPlayer(channel.streamUrl);
