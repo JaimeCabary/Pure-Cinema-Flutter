@@ -1,0 +1,25 @@
+services:
+  # ==========================================
+  # 1. Pure Cinema FastAPI Backend Service
+  # ==========================================
+  - type: web
+    name: pure-cinema-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: TMDB_API_KEY
+        value: 119f057993052814896eff7bb55e03db
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
