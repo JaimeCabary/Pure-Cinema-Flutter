@@ -3,13 +3,15 @@
 # 🎬 PURE CINEMA
 ### *Uncompromised 4K Cinema Streaming · 10,000+ Worldwide Live TV · AI CineBot Concierge*
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Google GenAI](https://img.shields.io/badge/Google_GenAI-ADK_Rotator-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
-[![Paystack](https://img.shields.io/badge/Paystack-VIP_Pass-0BA4DB?style=for-the-badge&logo=paystack&logoColor=white)](https://paystack.com)
-[![Render](https://img.shields.io/badge/Render-Live_Deploy-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com)
-[![License](https://img.shields.io/badge/License-MIT-E50914?style=for-the-badge)](LICENSE)
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Python_3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Google_Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/Paystack-0BA4DB?style=for-the-badge&logo=paystack&logoColor=white" alt="Paystack" />
+  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=black" alt="Render" />
+  <img src="https://img.shields.io/badge/License-MIT-E50914?style=for-the-badge" alt="License" />
+</p>
 
 <br/>
 
