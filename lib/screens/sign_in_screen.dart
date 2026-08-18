@@ -53,7 +53,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final res = await AuthService.login(email: email, password: password);
     if (!mounted) return;
 
-    if (res.success) {
+    if (res['success'] == true) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainNavScreen()),
         (route) => false,
@@ -61,7 +61,7 @@ class _SignInScreenState extends State<SignInScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = res.message ?? 'Sign in failed. Please check credentials.';
+        _errorMessage = res['error']?.toString() ?? res['message']?.toString() ?? 'Sign in failed. Please check credentials.';
       });
     }
   }

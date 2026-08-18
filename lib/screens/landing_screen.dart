@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
 import '../theme/fonts.dart';
@@ -31,8 +32,8 @@ class _LandingScreenState extends State<LandingScreen> {
     super.dispose();
   }
 
-  void _handleKey(KeyEvent event) {
-    if (event is KeyDownEvent) {
+  void _handleKey(RawKeyEvent event) {
+    if (event is RawKeyDownEvent) {
       final character = event.character;
       if (character != null && character.length == 1 && RegExp(r'[a-zA-Z]').hasMatch(character)) {
         _keyBuffer += character.toLowerCase();
@@ -84,9 +85,9 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
+    return RawKeyboardListener(
       focusNode: _focusNode,
-      onKeyEvent: _handleKey,
+      onKey: _handleKey,
       child: Scaffold(
         backgroundColor: const Color(0xFF050505),
         body: Stack(

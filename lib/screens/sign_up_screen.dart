@@ -67,7 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final res = await AuthService.register(name: name, email: email, password: password);
     if (!mounted) return;
 
-    if (res.success) {
+    if (res['success'] == true) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainNavScreen()),
         (route) => false,
@@ -75,7 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = res.message ?? 'Registration failed. Please try again.';
+        _errorMessage = res['error']?.toString() ?? res['message']?.toString() ?? 'Registration failed. Please try again.';
       });
     }
   }
