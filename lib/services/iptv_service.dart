@@ -7,11 +7,18 @@ import '../models/live_channel.dart';
 class IPTVService {
   static const String iptvOrgMainUrl = 'https://iptv-org.github.io/iptv/index.m3u';
   
+  static const String _productionUrl = 'https://pure-cinema-backend.onrender.com/api/iptv';
+
   static String get backendApiUrl {
-    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
-      return 'http://${Uri.base.host}:3000/api/iptv';
+    if (kIsWeb) {
+      if (Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+        if (RegExp(r'^\d+\.\d+\.\d+\.\d+$').hasMatch(Uri.base.host)) {
+          return 'http://${Uri.base.host}:3000/api/iptv';
+        }
+      }
+      return _productionUrl;
     }
-    return 'http://127.0.0.1:3000/api/iptv';
+    return _productionUrl;
   }
 
   static bool _isLoading = false;
