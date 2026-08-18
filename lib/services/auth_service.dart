@@ -17,7 +17,12 @@ class AuthService {
 
   static String _activeBaseUrl = 'http://localhost:3000';
 
-  static String get baseUrl => _activeBaseUrl;
+  static String get baseUrl {
+    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+      return 'http://${Uri.base.host}:3000';
+    }
+    return _activeBaseUrl;
+  }
 
   /// Helper to send request trying candidate ports if connection refused
   static Future<http.Response> _postWithFallback(

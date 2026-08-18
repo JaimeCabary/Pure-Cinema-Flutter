@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class AgentChatMessage {
@@ -23,6 +24,13 @@ class AgentService {
 
   static String _activeBaseUrl = 'http://localhost:3000';
 
+  static String get baseUrl {
+    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+      return 'http://${Uri.base.host}:3000';
+    }
+    return _activeBaseUrl;
+  }
+
   static Future<Map<String, dynamic>> sendChatMessage({
     required String message,
     List<AgentChatMessage> history = const [],
@@ -41,7 +49,7 @@ class AgentService {
 
     try {
       final response = await http
-          .post(Uri.parse('$_activeBaseUrl/api/agent/chat'), headers: headers, body: bodyStr)
+          .post(Uri.parse('$baseUrl/api/agent/chat'), headers: headers, body: bodyStr)
           .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {

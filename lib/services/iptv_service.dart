@@ -1,11 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/live_channel.dart';
 
 class IPTVService {
   static const String iptvOrgMainUrl = 'https://iptv-org.github.io/iptv/index.m3u';
-  static const String backendApiUrl = 'http://127.0.0.1:8000/api/iptv';
+  
+  static String get backendApiUrl {
+    if (kIsWeb && Uri.base.host.isNotEmpty && Uri.base.host != 'localhost' && Uri.base.host != '127.0.0.1') {
+      return 'http://${Uri.base.host}:3000/api/iptv';
+    }
+    return 'http://127.0.0.1:3000/api/iptv';
+  }
 
   static bool _isLoading = false;
   static bool get isLoading => _isLoading;

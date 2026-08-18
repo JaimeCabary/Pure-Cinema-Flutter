@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
 import '../models/user.dart';
@@ -10,6 +9,7 @@ import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/movie_details_modal.dart';
+import '../theme/fonts.dart';
 import 'watch_screen.dart';
 import 'profile_screen.dart';
 
@@ -21,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<Movie> _bestPicks = [];
   List<Movie> _trending = [];
   List<Movie> _popular = [];
   List<Movie> _nowPlaying = [];
@@ -110,12 +111,21 @@ class _HomeScreenState extends State<HomeScreen> {
       _topRated = results[3];
       _animation = results[4];
       
-      // Combine top distinctive hit blockbusters for the hero carousel (Not just Spider-Man)
+      // Curate "Best Picks": Highest rated acclaimed masterpieces and verified open cinematic movies
+      final Set<int> pickedIds = {};
+      _bestPicks = [];
+      for (final m in [...TMDBService.fallbackMovies, ..._topRated, ..._trending]) {
+        if (!pickedIds.contains(m.id) && m.voteAverage >= 7.8) {
+          pickedIds.add(m.id);
+          _bestPicks.add(m);
+        }
+      }
+
+      // Combine top distinctive hit blockbusters for the hero carousel
       final Set<int> added = {};
       _heroMovies = [];
       
-      // Pick top diverse blockbuster titles
-      final pool = [..._trending, ..._popular, ..._topRated];
+      final pool = [..._bestPicks, ..._trending, ..._popular];
       for (final m in pool) {
         if (!added.contains(m.id) && m.backdropPath != null && m.backdropPath!.isNotEmpty) {
           added.add(m.id);
@@ -141,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(
         backgroundColor: Color(0xFF050505),
         body: Center(
-          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+          child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
         ),
       );
     }
@@ -162,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'PURE CINEMA',
-                  style: GoogleFonts.outfit(
+                  style: AppFonts.sCoreDream(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -190,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _currentUser != null
                         ? Text(
                             _currentUser!.name.isNotEmpty ? _currentUser!.name[0].toUpperCase() : 'U',
-                            style: GoogleFonts.outfit(
+                            style: AppFonts.sCoreDream(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -216,13 +226,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _buildHeroCarousel(),
             ),
 
-          // Content Carousels
+          // Content Carousels with "Best Picks" header row
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 60),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildContentRow('★ Best Picks', _bestPicks, isFeatured: true),
                   _buildContentRow('Trending Now', _trending),
                   _buildContentRow('Recommended For You', _popular.reversed.toList()),
                   _buildContentRow('New Releases', _nowPlaying),
@@ -299,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       child: Stack(
         children: [
-          // Backdrop Image with topCenter Alignment (Never cuts top artwork)
+          // Backdrop Image with topCenter Alignment
           Positioned.fill(
             child: CachedNetworkImage(
               imageUrl: movie.backdropUrl,
@@ -339,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   movie.title,
-                  style: GoogleFonts.outfit(
+                  style: AppFonts.sCoreDream(
                     color: Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
@@ -353,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       '${movie.matchScore}% Match',
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: const Color(0xFF4ADE80),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -362,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 8),
                     Text(
                       movie.releaseYear,
-                      style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+                      style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -374,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Text(
                         '4K ULTRA HD',
-                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -386,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   movie.overview,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
+                  style: AppFonts.sCoreDream(
                     color: Colors.white70,
                     fontSize: 11,
                     fontWeight: FontWeight.w300,
@@ -413,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: const Icon(Icons.play_arrow, color: Colors.black, size: 18),
                       label: Text(
                         'PLAY',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5),
+                        style: AppFonts.sCoreDream(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -433,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 4),
                             Text(
                               isInList ? 'MY LIST' : 'ADD',
-                              style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                              style: AppFonts.sCoreDream(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
@@ -456,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 4),
                             Text(
                               'DETAILS',
-                              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700),
+                              style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
@@ -472,7 +483,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildContentRow(String title, List<Movie> movies) {
+  Widget _buildContentRow(String title, List<Movie> movies, {bool isFeatured = false}) {
     if (movies.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 22),
@@ -481,14 +492,31 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              title,
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
-              ),
+            child: Row(
+              children: [
+                if (isFeatured)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE50914),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'CURATED',
+                      style: AppFonts.sCoreDream(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                Text(
+                  title,
+                  style: AppFonts.sCoreDream(
+                    color: isFeatured ? const Color(0xFFFFD700) : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),

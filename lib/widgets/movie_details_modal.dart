@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import '../models/movie.dart';
 import '../models/cast_member.dart';
 import '../services/tmdb_service.dart';
 import '../screens/watch_screen.dart';
+import '../theme/fonts.dart';
 import 'movie_card.dart';
 
 class MovieDetailsModal extends StatefulWidget {
@@ -47,10 +47,12 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   bool _isLoadingDetails = true;
   late bool _isInList;
 
-  // Trailer Auto-play Controller
+  // Trailer Controller (Unseeked, Expandable)
   VideoPlayerController? _trailerController;
   bool _isTrailerReady = false;
   bool _isMuted = true;
+  bool _isPlaying = true;
+  bool _isExpanded = false;
 
   // High-def sample cinematic preview streams
   static final List<String> _sampleTrailers = [
@@ -77,15 +79,16 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
       _trailerController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
       await _trailerController!.initialize();
       _trailerController!.setLooping(true);
-      _trailerController!.setVolume(0.0); // Start muted for compliant autoplay
+      _trailerController!.setVolume(0.0); // Start muted for instant autoplay
       await _trailerController!.play();
       if (mounted) {
         setState(() {
           _isTrailerReady = true;
+          _isPlaying = true;
         });
       }
     } catch (_) {
-      // Fallback cleanly to backdrop image if video fails to stream
+      // Fallback cleanly to backdrop image if video stream fails
     }
   }
 
@@ -110,6 +113,18 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
     super.dispose();
   }
 
+  void _togglePlayPause() {
+    if (_trailerController != null && _isTrailerReady) {
+      if (_trailerController!.value.isPlaying) {
+        _trailerController!.pause();
+        setState(() => _isPlaying = false);
+      } else {
+        _trailerController!.play();
+        setState(() => _isPlaying = true);
+      }
+    }
+  }
+
   void _toggleMute() {
     if (_trailerController != null && _isTrailerReady) {
       setState(() {
@@ -119,10 +134,164 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
     }
   }
 
+  void _toggleExpand() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded && _isMuted) {
+        // Automatically unmute when expanded for full immersion
+        _isMuted = false;
+        _trailerController?.setVolume(1.0);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final movie = widget.movie;
 
+    // Full Expanded Trailer View
+    if (_isExpanded) {
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.95,
+        color: Colors.black,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Bar for Expanded Trailer
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 28),
+                      onPressed: _toggleExpand,
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'OFFICIAL TRAILER',
+                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        movie.title,
+                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up, color: Colors.white),
+                      onPressed: _toggleMute,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Expanded Trailer View (Unseeked)
+              Expanded(
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: _trailerController != null && _trailerController!.value.isInitialized
+                        ? _trailerController!.value.aspectRatio
+                        : 16 / 9,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (_isTrailerReady && _trailerController != null)
+                          VideoPlayer(_trailerController!)
+                        else
+                          CachedNetworkImage(
+                            imageUrl: movie.backdropUrl,
+                            fit: BoxFit.cover,
+                          ),
+
+                        // Play/Pause Overlay Toggle
+                        GestureDetector(
+                          onTap: _togglePlayPause,
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Center(
+                              child: AnimatedOpacity(
+                                opacity: _isPlaying ? 0.0 : 1.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _isPlaying ? Icons.pause : Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Bottom Action Button in Expanded Trailer
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE50914),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                          );
+                        },
+                        icon: const Icon(Icons.play_arrow, size: 22),
+                        label: Text(
+                          'WATCH FULL MOVIE',
+                          style: AppFonts.sCoreDream(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white24),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: _toggleExpand,
+                      icon: const Icon(Icons.fullscreen_exit_rounded, size: 20),
+                      label: Text('COLLAPSE', style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Default Halfscreen Details Modal
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
@@ -148,7 +317,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hero Trailer Auto-play & Backdrop Player
+                  // Hero Trailer Auto-play & Backdrop Player (Unseeked, Expandable)
                   Stack(
                     children: [
                       ClipRRect(
@@ -167,7 +336,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                                 ),
                               ),
 
-                              // Autoplay Video Layer
+                              // Autoplay Video Trailer Layer (Unseeked continuous teaser)
                               if (_isTrailerReady && _trailerController != null)
                                 Positioned.fill(
                                   child: AnimatedOpacity(
@@ -219,73 +388,115 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                       ),
 
-                      // Mute / Unmute Audio Toggle (Top Left)
-                      if (_isTrailerReady)
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: GestureDetector(
-                            onTap: _toggleMute,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      // Trailer Badge & Audio Toggle (Top Left)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.white24, width: 0.8),
+                                color: const Color(0xFFE50914),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _isMuted ? Icons.volume_off : Icons.volume_up,
+                              child: Text(
+                                'TRAILER',
+                                style: AppFonts.sCoreDream(
+                                  color: Colors.white,
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            if (_isTrailerReady) ...[
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: _toggleMute,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.white24, width: 0.8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _isMuted ? Icons.volume_off : Icons.volume_up,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _isMuted ? 'UNMUTE' : 'MUTE',
+                                        style: AppFonts.sCoreDream(
+                                          color: Colors.white,
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Play/Pause Center Tap
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: _togglePlayPause,
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Center(
+                              child: AnimatedOpacity(
+                                opacity: _isPlaying ? 0.0 : 0.9,
+                                duration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.7),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _isPlaying ? Icons.pause : Icons.play_arrow,
                                     color: Colors.white,
-                                    size: 14,
+                                    size: 32,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _isMuted ? 'UNMUTE' : 'MUTE',
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
                         ),
+                      ),
 
-                      // Fullscreen Watch Preview Floating Button (Bottom Left)
+                      // Expand Trailer Button (Bottom Right)
                       Positioned(
-                        bottom: 12,
-                        left: 12,
+                        bottom: 10,
+                        right: 10,
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
-                            );
-                          },
+                          onTap: _toggleExpand,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Colors.black.withValues(alpha: 0.75),
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white24),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.play_arrow, color: Colors.black, size: 18),
+                                const Icon(Icons.fullscreen_rounded, color: Colors.white, size: 16),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'PLAY MOVIE',
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.black,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.0,
+                                  'EXPAND',
+                                  style: AppFonts.sCoreDream(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
@@ -300,7 +511,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                   // Title
                   Text(
                     movie.title,
-                    style: GoogleFonts.outfit(
+                    style: AppFonts.sCoreDream(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -314,7 +525,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                     children: [
                       Text(
                         '${movie.matchScore}% Match',
-                        style: GoogleFonts.outfit(
+                        style: AppFonts.sCoreDream(
                           color: const Color(0xFF4ADE80),
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -323,7 +534,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                       const SizedBox(width: 10),
                       Text(
                         movie.releaseYear,
-                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
+                        style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 12),
                       ),
                       const SizedBox(width: 10),
                       Container(
@@ -335,7 +546,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                         child: Text(
                           '4K ULTRA HD',
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                          style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -348,7 +559,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                         child: Text(
                           '5.1 AUDIO',
-                          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                          style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -376,7 +587,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                           icon: const Icon(Icons.play_arrow, color: Colors.black, size: 20),
                           label: Text(
                             'WATCH NOW',
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5),
+                            style: AppFonts.sCoreDream(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5),
                           ),
                         ),
                       ),
@@ -400,7 +611,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                               const SizedBox(width: 6),
                               Text(
                                 _isInList ? 'IN LIST' : 'MY LIST',
-                                style: GoogleFonts.outfit(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                                style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                               ),
                             ],
                           ),
@@ -413,7 +624,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                   // Overview Synopsis
                   Text(
                     movie.overview,
-                    style: GoogleFonts.outfit(
+                    style: AppFonts.sCoreDream(
                       color: Colors.white70,
                       fontSize: 13,
                       height: 1.5,
@@ -425,7 +636,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                   // ── TOP BILLED CAST & ACTORS ──
                   Text(
                     'Cast & Crew',
-                    style: GoogleFonts.outfit(
+                    style: AppFonts.sCoreDream(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -438,13 +649,13 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
                       ),
                     )
                   else if (_cast.isEmpty)
                     Text(
                       'Cast details unavailable for this title.',
-                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+                      style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 12),
                     )
                   else
                     SizedBox(
@@ -470,7 +681,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                                   maxLines: 2,
                                   textAlign: TextAlign.center,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.outfit(
+                                  style: AppFonts.sCoreDream(
                                     color: Colors.white,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -482,7 +693,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                                   maxLines: 1,
                                   textAlign: TextAlign.center,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.outfit(
+                                  style: AppFonts.sCoreDream(
                                     color: Colors.white38,
                                     fontSize: 9,
                                   ),
@@ -500,7 +711,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                   if (_similar.isNotEmpty) ...[
                     Text(
                       'More Like This',
-                      style: GoogleFonts.outfit(
+                      style: AppFonts.sCoreDream(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
