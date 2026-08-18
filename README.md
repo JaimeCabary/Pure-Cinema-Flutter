@@ -48,50 +48,362 @@
 
 ---
 
-## 🏗️ Architecture Overview
+## 📐 System Design & UML Diagrams
+
+### 1. 🎯 Use Case Diagram
+Illustrates interactions between system actors (**Guest User**, **VIP Member**, and **System Administrator**) and core Pure Cinema subsystems.
 
 ```mermaid
-graph TB
-    subgraph Client ["Flutter Client (Web, iOS, Android, Desktop)"]
-        UI[Cinematic UI / S-Core Dream]
-        Dock[Floating Capsule Dock]
-        Player[4K Video Player & Trailers]
-        Storage[LocalStorage / SQLite Cache]
-        BotUI[Titanium AI CineBot FAB]
+graph LR
+    actorGuest(("👤 Guest User"))
+    actorVIP(("⭐ VIP Member"))
+    actorAdmin(("👑 System Administrator"))
+
+    subgraph PureCinemaSystem ["🎬 Pure Cinema Ecosystem"]
+        UC1(["Browse 4K Cinema & Best Picks"])
+        UC2(["Expand Non-Seeking Half-Screen Trailers"])
+        UC3(["Stream 10,000+ Worldwide Live IPTV"])
+        UC4(["Filter Channels by Country Flags & Genres"])
+        UC5(["Chat with Google GenAI CineBot"])
+        UC6(["Execute In-App Navigation Commands"])
+        UC7(["Upgrade VIP Pass via Paystack"])
+        UC8(["Simulate Mock Payments & Receipts"])
+        UC9(["Manage Local Watchlist & Resume Progress"])
+        UC10(["Access Administrator Portal"])
     end
 
-    subgraph Backend ["FastAPI UV Backend (Render Cloud)"]
-        Router[FastAPI ASGI Router]
-        AuthSvc[JWT Authentication]
-        IPTVProxy[IPTV M3U Stream Proxy]
-        PaymentSvc[Paystack & Mock Gateway]
-        Rotator[GenAI ADK Model Rotator]
+    actorGuest --> UC1
+    actorGuest --> UC2
+    actorGuest --> UC3
+    actorGuest --> UC4
+    actorGuest --> UC5
+    actorGuest --> UC7
+    actorGuest --> UC8
+    actorGuest --> UC9
+
+    actorVIP --> UC1
+    actorVIP --> UC2
+    actorVIP --> UC3
+    actorVIP --> UC5
+    actorVIP --> UC6
+    actorVIP --> UC9
+
+    actorAdmin --> UC1
+    actorAdmin --> UC3
+    actorAdmin --> UC5
+    actorAdmin --> UC6
+    actorAdmin --> UC10
+```
+
+---
+
+### 2. 🏛️ Class Diagram (Architecture & Relationships)
+Shows structural object-oriented relationships between core data models, client controllers, and service handlers.
+
+```mermaid
+classDiagram
+    class Movie {
+        +int id
+        +String title
+        +String overview
+        +String posterPath
+        +String backdropPath
+        +String releaseDate
+        +double voteAverage
+        +String? trailerUrl
+        +List~String~ genres
+        +List~CastMember~ cast
+    }
+
+    class CastMember {
+        +int id
+        +String name
+        +String character
+        +String? profilePath
+    }
+
+    class LiveChannel {
+        +String id
+        +String name
+        +String logo
+        +String group
+        +String streamUrl
+        +String country
+        +String badge
+        +String currentProgram
+    }
+
+    class User {
+        +String id
+        +String email
+        +String name
+        +String? avatar
+        +String role
+        +bool isVip
+    }
+
+    class SubscriptionPlan {
+        +String id
+        +String name
+        +int priceInKobo
+        +String currency
+        +String period
+        +List~String~ features
+        +String? badge
+    }
+
+    class AgentChatMessage {
+        +String role
+        +String content
+        +List~ActionCommand~ actions
+    }
+
+    class ActionCommand {
+        +String type
+        +Map~String,dynamic~ payload
+    }
+
+    class TMDBService {
+        +searchMovies(query)
+        +getTrending()
+        +getMovieCredits(movieId)
+    }
+
+    class IPTVService {
+        +loadChannels()
+        +filterByCountry(country)
+        +filterByGenre(genre)
+    }
+
+    class AgentService {
+        +processChat(request)
+        +rotateModel()
+    }
+
+    class PaymentService {
+        +initializePayment(email, amount)
+        +verifyPayment(ref)
+    }
+
+    class DatabaseService {
+        +getWatchlist()
+        +addToWatchlist(movie)
+        +saveWatchProgress(id, pos, dur)
+    }
+
+    Movie "1" *-- "many" CastMember : features
+    User "1" --> "many" Movie : saves in watchlist
+    User "1" --> "0..1" SubscriptionPlan : subscribes
+    AgentChatMessage "1" *-- "0..*" ActionCommand : triggers
+    AgentService ..> AgentChatMessage : generates
+    IPTVService ..> LiveChannel : manages
+    TMDBService ..> Movie : fetches
+    DatabaseService ..> Movie : persists
+    PaymentService ..> SubscriptionPlan : processes
+```
+
+---
+
+### 3. 🗄️ Entity Relationship Diagram (ERD)
+Defines the pure data schema, attributes, and relationships across persistent entities (without behavioral methods).
+
+```mermaid
+erDiagram
+    USER ||--o{ MOVIE_WATCHLIST : "bookmarks"
+    USER ||--o{ PLAYBACK_HISTORY : "tracks"
+    USER ||--o| VIP_SUBSCRIPTION : "owns"
+    MOVIE ||--o{ MOVIE_WATCHLIST : "contained in"
+    MOVIE ||--o{ PLAYBACK_HISTORY : "recorded in"
+    MOVIE ||--|{ CAST_MEMBER : "features"
+    LIVE_CHANNEL }|--|| REGION_FLAG : "originates from"
+    LIVE_CHANNEL }|--|| CHANNEL_GENRE : "belongs to"
+    VIP_SUBSCRIPTION }|--|| PAYMENT_TRANSACTION : "verified by"
+
+    USER {
+        string id PK
+        string email
+        string name
+        string role
+        string avatar_url
+        boolean is_vip
+        timestamp created_at
+    }
+
+    MOVIE {
+        int id PK
+        string title
+        string overview
+        string poster_path
+        string backdrop_path
+        string release_date
+        float vote_average
+        string trailer_youtube_key
+    }
+
+    CAST_MEMBER {
+        int id PK
+        int movie_id FK
+        string actor_name
+        string character_role
+        string profile_image_url
+    }
+
+    MOVIE_WATCHLIST {
+        string user_id FK
+        int movie_id FK
+        timestamp added_at
+    }
+
+    PLAYBACK_HISTORY {
+        string user_id FK
+        int movie_id FK
+        int position_seconds
+        int duration_seconds
+        timestamp last_watched_at
+    }
+
+    VIP_SUBSCRIPTION {
+        string id PK
+        string user_id FK
+        string plan_tier
+        string status
+        timestamp start_date
+        timestamp expires_at
+    }
+
+    PAYMENT_TRANSACTION {
+        string reference PK
+        string user_email
+        int amount_in_kobo
+        string currency
+        string payment_gateway
+        string transaction_status
+        boolean is_mock_test
+        timestamp paid_at
+    }
+
+    LIVE_CHANNEL {
+        string id PK
+        string channel_name
+        string logo_url
+        string stream_url
+        string country_code
+        string genre_category
+        string stream_quality_badge
+    }
+
+    REGION_FLAG {
+        string country_code PK
+        string country_name
+        string unicode_flag_emoji
+    }
+
+    CHANNEL_GENRE {
+        string category_name PK
+        string description
+    }
+```
+
+---
+
+### 4. 🏊 Activity Diagram with Swimlanes
+Maps cross-functional workflows across the **User**, **Flutter Client**, **FastAPI Backend**, and **Cloud Providers**.
+
+```mermaid
+flowchart TB
+    subgraph UserLane ["👤 User / Client"]
+        start([Start App]) --> splash[Launch Screen & Breathing Logo]
+        splash --> onboarding[Swipe 3-Step Onboarding]
+        onboarding --> authChoice{Select Entry Mode}
+        authChoice -->|Sign In / Up| authScreen[Submit Auth Credentials]
+        authChoice -->|Guest Mode| mainUI[Enter Main Cinema Hub]
+        authScreen --> mainUI
+        mainUI --> userAction{User Intent}
+        userAction -->|Watch Cinema| clickMovie[Select Movie & Expand Trailer]
+        userAction -->|Live TV| selectChannel[Browse Flag Filtered Channels]
+        userAction -->|AI CineBot| openBot[Prompt Cinema Concierge]
+        userAction -->|Upgrade VIP| clickUpgrade[Select VIP Pass Plan]
     end
 
-    subgraph External ["Cloud Providers & APIs"]
-        TMDB[TMDB Movie Metadata]
-        Gemini[Google Gemini API]
-        IPTVOrg[IPTV-Org Broadcast Index]
-        PaystackAPI[Paystack Gateway]
-        Supabase[(PostgreSQL / Supabase)]
+    subgraph FlutterLane ["📱 Flutter Client Layer"]
+        clickMovie --> initPlayer[Initialize 4K Player & Load Resume Timestamp]
+        selectChannel --> reqChannel[Request Stream HLS Playlist]
+        openBot --> sendMsg[Dispatch Message & Current Screen Context]
+        clickUpgrade --> checkoutModal[Render Paystack Checkout / Mock Switch]
     end
 
-    UI --> Dock
-    UI --> Player
-    UI --> Storage
-    BotUI --> Router
-    UI --> Router
+    subgraph BackendLane ["⚡ FastAPI UV Backend"]
+        reqChannel --> vlcProxy[Proxy & Cache M3U Chunk Stream]
+        sendMsg --> intentCheck{Matches App Intent?}
+        intentCheck -->|Yes: Direct Nav| buildAction[Build Action Payload: OPEN/NAVIGATE]
+        intentCheck -->|No: Query AI| modelRotator[Invoke Google GenAI ADK Rotator]
+        checkoutModal --> initPaystack[Initialize Paystack Reference]
+    end
 
-    Router --> AuthSvc
-    Router --> IPTVProxy
-    Router --> PaymentSvc
-    Router --> Rotator
+    subgraph CloudLane ["☁️ Cloud Services (Google GenAI / Paystack / TMDB)"]
+        modelRotator --> genaiCall[Gemini 2.5-Flash]
+        genaiCall -->|Success| genaiResponse[Return AI Cinematic Answer]
+        genaiCall -->|Quota 429| failoverModel[Failover to Gemini 2.0 / 1.5-Flash]
+        failoverModel --> genaiResponse
+        initPaystack --> paystackVerify[Process Paystack / Mock Verification]
+    end
 
-    Rotator --> Gemini
-    IPTVProxy --> IPTVOrg
-    PaymentSvc --> PaystackAPI
-    Router --> TMDB
-    AuthSvc -.-> Supabase
+    vlcProxy --> livePlayer[Stream 60 FPS Video to User]
+    genaiResponse --> streamReply[Display Bot Response & Execute In-App Action]
+    buildAction --> streamReply
+    paystackVerify --> activateVIP[Issue VIP Pass & Unlock 4K Streams]
+```
+
+---
+
+### 5. 🔄 Sequence Diagram (End-to-End Discovery & Checkout)
+Details synchronous and asynchronous message exchanges during an AI-driven movie discovery and VIP Pass checkout lifecycle.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 Cinema User
+    participant Flutter as 📱 Flutter Client
+    participant Storage as 💾 LocalStorage / SQLite
+    participant Backend as ⚡ FastAPI Backend
+    participant GenAI as 🤖 Google GenAI (ADK Rotator)
+    participant Paystack as 💳 Paystack Gateway
+
+    %% Phase 1: AI Chat & Action Execution
+    Note over User,GenAI: 1. AI CineBot Recommendation & In-App Navigation
+    User->>Flutter: Types "Recommend top sci-fi like Interstellar"
+    Flutter->>Backend: POST /api/agent/chat { message, currentScreen: "Home" }
+    Backend->>GenAI: Try client.models.generate_content("gemini-2.5-flash")
+    alt Rate Limit / Quota 429
+        GenAI-->>Backend: 429 Resource Exhausted
+        Backend->>GenAI: Failover to "gemini-2.0-flash" / "gemini-1.5-flash"
+    end
+    GenAI-->>Backend: Return formatted response + SEARCH_MOVIE action
+    Backend-->>Flutter: { success: true, reply: "...", actions: [{"type": "OPEN_MOVIE", "payload": {"movieId": 157336}}] }
+    Flutter->>User: Displays Titanium Bot Message
+    Flutter->>Flutter: Automatically opens Interstellar Details Modal
+
+    %% Phase 2: Video Playback & Resume Sync
+    Note over User,Storage: 2. Video Playback & Local Progress Resume
+    User->>Flutter: Presses "Watch Now (4K HDR)"
+    Flutter->>Storage: getWatchProgress(157336)
+    Storage-->>Flutter: { position: 1420s, duration: 10140s }
+    Flutter->>User: Resumes playback seamlessly from 00:23:40
+    Flutter->>Storage: saveWatchProgress(157336, 1850s, 10140s)
+
+    %% Phase 3: VIP Pass Checkout
+    Note over User,Paystack: 3. Paystack VIP Pass Checkout & Mock Mode
+    User->>Flutter: Clicks "Upgrade to Pure Cinema VIP Pass"
+    Flutter->>Backend: POST /api/payment/initialize { email, planId: "vip_monthly" }
+    Backend->>Paystack: Create transaction reference
+    Paystack-->>Backend: { authUrl, reference: "pc_tx_928172" }
+    Backend-->>Flutter: Return checkout details
+    Flutter->>User: Renders Paystack Modal (or Instant Mock Switch)
+    User->>Flutter: Confirms Mock Checkout Approval
+    Flutter->>Backend: POST /api/payment/verify { reference: "pc_tx_928172" }
+    Backend-->>Flutter: { success: true, isVip: true, transaction: { status: "success" } }
+    Flutter->>Storage: updateUserSession(isVip: true)
+    Flutter->>User: Shows VIP Celebration Badge & Unlocks VIP Streams 🎉
 ```
 
 ---
@@ -221,10 +533,10 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 
 ---
 
-## 💡 Keyboard Shortcuts & Easter Eggs
+## 💡 Access Modes
 
-- **Admin Secret Bypass**: On the landing or sign in screen, type the secret keyword `shalom` to instantly unlock the VIP Shalom Admin profile with full privileges.
 - **Guest Access**: Tap **"ENTER AS GUEST"** on the landing screen for instant zero-friction cinema streaming.
+- **Member Access**: Create an account or sign in to save your personal watchlists and track watch history across sessions.
 
 ---
 
