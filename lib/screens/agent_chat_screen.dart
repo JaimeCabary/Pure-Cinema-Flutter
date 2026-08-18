@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/agent_service.dart';
+import '../theme/fonts.dart';
 
 class AgentChatScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
@@ -126,20 +126,25 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
         children: [
           if (!isUser) ...[
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Colors.deepPurple, Colors.blueAccent],
+                gradient: const RadialGradient(
+                  colors: [Color(0xFFE50914), Color(0xFF7928CA)],
+                  center: Alignment(-0.2, -0.3),
                 ),
+                border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.6), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.purple.withValues(alpha: 0.4),
+                    color: Colors.purple.withValues(alpha: 0.5),
                     blurRadius: 10,
                   ),
                 ],
               ),
-              child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 20),
+              child: const Center(
+                child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: 22),
+              ),
             ),
             const SizedBox(width: 10),
           ],
@@ -147,13 +152,13 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isUser ? Colors.redAccent.withValues(alpha: 0.9) : const Color(0xFF1E1E2C),
+                color: isUser ? const Color(0xFFE50914).withValues(alpha: 0.9) : const Color(0xFF1E1E2C),
                 borderRadius: BorderRadius.circular(16).copyWith(
                   bottomLeft: isUser ? const Radius.circular(16) : const Radius.circular(0),
                   bottomRight: isUser ? const Radius.circular(0) : const Radius.circular(16),
                 ),
                 border: Border.all(
-                  color: isUser ? Colors.redAccent : Colors.purpleAccent.withValues(alpha: 0.3),
+                  color: isUser ? const Color(0xFFE50914) : Colors.purpleAccent.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -161,9 +166,9 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                 children: [
                   Text(
                     msg.content,
-                    style: GoogleFonts.outfit(
+                    style: AppFonts.sCoreDream(
                       color: Colors.white,
-                      fontSize: 14.5,
+                      fontSize: 13.5,
                       height: 1.4,
                     ),
                   ),
@@ -191,7 +196,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                             }
                           },
                           icon: const Icon(Icons.play_arrow_rounded, size: 16, color: Colors.white),
-                          label: Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
+                          label: Text(label, style: AppFonts.sCoreDream(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.purple.shade700,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -208,7 +213,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
             const SizedBox(width: 10),
             const CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.redAccent,
+              backgroundColor: Color(0xFFE50914),
               child: Icon(Icons.person, size: 18, color: Colors.white),
             ),
           ],
@@ -239,25 +244,51 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
           ),
           title: Row(
             children: [
+              // Big Robot Avatar in Header
               Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.greenAccent,
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [Color(0xFFE50914), Color(0xFF7928CA)],
+                  ),
+                  border: Border.all(color: Colors.cyanAccent, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.cyanAccent.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: 22),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Pure Cinema AI Agent',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  Row(
+                    children: [
+                      Text(
+                        'Pure Cinema AI CineBot',
+                        style: AppFonts.sCoreDream(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF00FF66),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ),
                   Text(
                     'Powered by Google GenAI ADK',
-                    style: GoogleFonts.outfit(fontSize: 11, color: Colors.purpleAccent),
+                    style: AppFonts.sCoreDream(fontSize: 10, color: Colors.purpleAccent),
                   ),
                 ],
               ),
@@ -275,18 +306,18 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
               ),
             ),
             if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.purpleAccent),
                     ),
-                    SizedBox(width: 8),
-                    Text('Agent is thinking...', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(width: 8),
+                    Text('Agent is thinking...', style: AppFonts.sCoreDream(color: Colors.grey, fontSize: 11)),
                   ],
                 ),
               ),
@@ -306,7 +337,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                       backgroundColor: const Color(0xFF26263A),
                       label: Text(
                         prompt,
-                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
+                        style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
                       ),
                       onPressed: () => _handleSubmitted(prompt),
                     ),
@@ -326,10 +357,10 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        style: const TextStyle(color: Colors.white),
+                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13),
                         decoration: InputDecoration(
-                          hintText: 'Ask Pure Cinema Agent...',
-                          hintStyle: TextStyle(color: Colors.grey.shade500),
+                          hintText: 'Ask Pure Cinema AI Bot...',
+                          hintStyle: AppFonts.sCoreDream(color: Colors.grey.shade500, fontSize: 12),
                           filled: true,
                           fillColor: const Color(0xFF252538),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -345,7 +376,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                     IconButton.filled(
                       onPressed: () => _handleSubmitted(_textController.text),
                       icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                      style: IconButton.styleFrom(backgroundColor: Colors.redAccent),
+                      style: IconButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
                     ),
                   ],
                 ),
