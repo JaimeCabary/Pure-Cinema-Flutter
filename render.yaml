@@ -14,7 +14,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.10.12
       - key: TMDB_API_KEY
-        value: 119f057993052814896eff7bb55e03db
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: PAYSTACK_SECRET_KEY

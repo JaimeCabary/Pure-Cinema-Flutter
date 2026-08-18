@@ -5,7 +5,7 @@ import '../models/cast_member.dart';
 
 class TMDBService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
-  static const String _apiKey = '119f057993052814896eff7bb55e03db';
+  static const String _apiKey = String.fromEnvironment('TMDB_API_KEY', defaultValue: '');
 
   static final Map<String, dynamic> _cache = {};
 
