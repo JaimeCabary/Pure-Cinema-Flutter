@@ -24,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'image': 'https://image.tmdb.org/t/p/original/xJHokMbljvjADYdit5fK5VQsXEG.jpg',
     },
     {
-      'title': '10,000+ Live IPTV\nWorldwide Broadcasts',
+      'title': '10,000+ Live TV\nWorldwide Broadcasts',
       'subtitle': 'Experience seamless 60 FPS live sports, international news, cinema networks, and VLC network streaming on demand.',
       'badge': 'GLOBAL LIVE TV',
       'image': 'https://image.tmdb.org/t/p/original/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg',

@@ -16,16 +16,39 @@ class CinemaLogoWidget extends StatefulWidget {
 
 class _CinemaLogoWidgetState extends State<CinemaLogoWidget> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2200),
     );
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
+
+    _glowAnimation = Tween<double>(begin: 0.3, end: 0.85).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
+
     if (widget.animate) {
       _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CinemaLogoWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animate != oldWidget.animate) {
+      if (widget.animate) {
+        _controller.repeat(reverse: true);
+      } else {
+        _controller.stop();
+      }
     }
   }
 
@@ -37,19 +60,50 @@ class _CinemaLogoWidgetState extends State<CinemaLogoWidget> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return CustomPaint(
-            painter: _CinemaLogoPainter(
-              animationValue: widget.animate ? _controller.value : 0.0,
+    if (!widget.animate) {
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: CustomPaint(
+          painter: _CinemaLogoPainter(animationValue: 0.0),
+        ),
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final glow = _glowAnimation.value;
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                // Pulsing Red / Crimson Cinematic Breathing Glow
+                BoxShadow(
+                  color: const Color(0xFFE50914).withValues(alpha: glow * 0.5),
+                  blurRadius: widget.size * 0.45,
+                  spreadRadius: widget.size * 0.05,
+                ),
+                // Subtle White Core Highlight
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: glow * 0.25),
+                  blurRadius: widget.size * 0.2,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
-          );
-        },
-      ),
+            child: CustomPaint(
+              painter: _CinemaLogoPainter(
+                animationValue: _controller.value,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -65,8 +119,12 @@ class _CinemaLogoPainter extends CustomPainter {
     canvas.save();
     canvas.scale(scale);
 
+    // Subtle dynamic brightness based on breath cycle
+    final brightness = (200 + (animationValue * 55)).toInt().clamp(0, 255);
+    final dynamicWhite = Color.fromARGB(255, brightness, brightness, brightness);
+
     final strokePaint = Paint()
-      ..color = const Color(0xFFE4E4E7)
+      ..color = dynamicWhite
       ..strokeWidth = 1.3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -77,13 +135,17 @@ class _CinemaLogoPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final perfPaint = Paint()
-      ..color = const Color(0xFFE4E4E7)
+      ..color = dynamicWhite
       ..style = PaintingStyle.fill;
 
     final dimPaint = Paint()
-      ..color = const Color(0xFF52525B)
+      ..color = Color.lerp(const Color(0xFF52525B), const Color(0xFF8E8E93), animationValue)!
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
+
+    final redAccentPaint = Paint()
+      ..color = Color.lerp(const Color(0xFFB71C1C), const Color(0xFFE50914), animationValue)!
+      ..style = PaintingStyle.fill;
 
     // ── LEFT FILM STRIP ──
     final leftRect = const Rect.fromLTRB(3, 4, 7, 20);
@@ -128,7 +190,7 @@ class _CinemaLogoPainter extends CustomPainter {
     canvas.drawLine(const Offset(8, 15), const Offset(16, 15), dimPaint);
 
     // ── CENTER PLAY TRIANGLE ──
-    final playScale = 1.0 + (animationValue * 0.1);
+    final playScale = 1.0 + (animationValue * 0.15);
     canvas.save();
     canvas.translate(12, 12);
     canvas.scale(playScale);
@@ -140,7 +202,9 @@ class _CinemaLogoPainter extends CustomPainter {
       ..lineTo(10.5, 14.5)
       ..close();
 
-    canvas.drawPath(playPath, perfPaint);
+    // Red accent play triangle with breathing fill
+    canvas.drawPath(playPath, redAccentPaint);
+    canvas.drawPath(playPath, strokePaint);
     canvas.restore();
 
     canvas.restore();
