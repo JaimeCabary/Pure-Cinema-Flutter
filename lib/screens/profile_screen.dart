@@ -179,12 +179,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: const Color(0xFF0E0E0E),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isAdmin ? const Color(0xFFE50914).withValues(alpha: 0.5) : const Color(0xFF222222),
+              color: isAdmin ? Colors.white : const Color(0xFF222222),
             ),
             boxShadow: [
               if (isAdmin)
                 BoxShadow(
-                  color: const Color(0xFFE50914).withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -198,8 +198,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isAdmin ? const Color(0xFFE50914) : const Color(0xFF222222),
-                  border: Border.all(color: Colors.white24, width: 1.5),
+                  color: const Color(0xFF18181B),
+                  border: Border.all(color: Colors.white70, width: 1.5),
                   image: user.avatar != null && user.avatar!.isNotEmpty
                       ? DecorationImage(image: NetworkImage(user.avatar!), fit: BoxFit.cover)
                       : null,
@@ -240,13 +240,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE50914),
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'ADMIN',
                               style: GoogleFonts.outfit(
-                                color: Colors.white,
+                                color: Colors.black,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0.5,
@@ -274,7 +274,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Icon(
                             isAdmin ? Icons.verified_rounded : Icons.star_rounded,
                             size: 12,
-                            color: isAdmin ? const Color(0xFFE50914) : const Color(0xFFFFB300),
+                            color: Colors.white,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -382,18 +382,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 48,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0x66E50914)),
+              side: const BorderSide(color: Color(0xFF3F3F46)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              backgroundColor: const Color(0x1AE50914),
+              backgroundColor: const Color(0xFF121214),
             ),
             onPressed: _handleLogout,
-            icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFFF5252)),
+            icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.white70),
             label: Text(
               'SIGN OUT OF PURE CINEMA',
               style: GoogleFonts.outfit(
-                color: const Color(0xFFFF5252),
+                color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
               ),
             ),

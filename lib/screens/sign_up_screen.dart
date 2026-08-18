@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
+import '../widgets/subscription_modal.dart';
 import '../theme/fonts.dart';
 import 'main_nav_screen.dart';
 import 'sign_in_screen.dart';
@@ -68,10 +69,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
 
     if (res['success'] == true) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainNavScreen()),
-        (route) => false,
-      );
+      // Prompt user with Choose Plan & Paystack Checkout flow
+      await SubscriptionModal.show(context, onCompleted: () {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainNavScreen()),
+            (route) => false,
+          );
+        }
+      });
+
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainNavScreen()),
+          (route) => false,
+        );
+      }
     } else {
       setState(() {
         _isLoading = false;
@@ -117,7 +130,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Text(
                         'Join Pure Cinema for personalized 4K streaming',
                         style: AppFonts.sCoreDream(
-                          color: Colors.white60,
+                          color: const Color(0xFFA1A1AA),
                           fontSize: 13,
                         ),
                       ),
@@ -132,18 +145,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      color: const Color(0xFF18181B),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                      border: Border.all(color: const Color(0xFF3F3F46)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                        const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: AppFonts.sCoreDream(color: Colors.redAccent, fontSize: 12),
+                            style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
                           ),
                         ),
                       ],
@@ -152,11 +165,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // Full Name
+                // Form
                 Text(
                   'FULL NAME',
                   style: AppFonts.sCoreDream(
-                    color: Colors.white70,
+                    color: const Color(0xFFA1A1AA),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,
@@ -165,31 +178,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 6),
                 TextField(
                   controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
                   style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'John Doe',
-                    hintStyle: AppFonts.sCoreDream(color: Colors.white30, fontSize: 13),
+                    hintStyle: AppFonts.sCoreDream(color: const Color(0xFF52525B), fontSize: 14),
                     filled: true,
-                    fillColor: const Color(0xFF121212),
-                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Colors.white38, size: 18),
+                    fillColor: const Color(0xFF121214),
+                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF71717A), size: 20),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF222222)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Email
                 Text(
                   'EMAIL ADDRESS',
                   style: AppFonts.sCoreDream(
-                    color: Colors.white70,
+                    color: const Color(0xFFA1A1AA),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,
@@ -202,27 +218,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'name@example.com',
-                    hintStyle: AppFonts.sCoreDream(color: Colors.white30, fontSize: 13),
+                    hintStyle: AppFonts.sCoreDream(color: const Color(0xFF52525B), fontSize: 14),
                     filled: true,
-                    fillColor: const Color(0xFF121212),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.white38, size: 18),
+                    fillColor: const Color(0xFF121214),
+                    prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF71717A), size: 20),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF222222)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Password
                 Text(
                   'PASSWORD',
                   style: AppFonts.sCoreDream(
-                    color: Colors.white70,
+                    color: const Color(0xFFA1A1AA),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,
@@ -234,36 +254,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: _obscurePassword,
                   style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'Minimum 6 characters',
-                    hintStyle: AppFonts.sCoreDream(color: Colors.white30, fontSize: 13),
+                    hintText: 'At least 6 characters',
+                    hintStyle: AppFonts.sCoreDream(color: const Color(0xFF52525B), fontSize: 14),
                     filled: true,
-                    fillColor: const Color(0xFF121212),
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.white38, size: 18),
+                    fillColor: const Color(0xFF121214),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF71717A), size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: Colors.white38,
-                        size: 18,
+                        color: const Color(0xFF71717A),
+                        size: 20,
                       ),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF222222)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Confirm Password
                 Text(
                   'CONFIRM PASSWORD',
                   style: AppFonts.sCoreDream(
-                    color: Colors.white70,
+                    color: const Color(0xFFA1A1AA),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,
@@ -276,105 +300,109 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Re-enter your password',
-                    hintStyle: AppFonts.sCoreDream(color: Colors.white30, fontSize: 13),
+                    hintStyle: AppFonts.sCoreDream(color: const Color(0xFF52525B), fontSize: 14),
                     filled: true,
-                    fillColor: const Color(0xFF121212),
-                    prefixIcon: const Icon(Icons.lock_reset_rounded, color: Colors.white38, size: 18),
+                    fillColor: const Color(0xFF121214),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF71717A), size: 20),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: Colors.white38,
-                        size: 18,
+                        color: const Color(0xFF71717A),
+                        size: 20,
                       ),
                       onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF222222)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF27272A)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                  onSubmitted: (_) => _handleSignUp(),
                 ),
                 const SizedBox(height: 16),
 
-                // Terms agreement
+                // Terms Checkbox
                 Row(
                   children: [
-                    Checkbox(
-                      value: _agreeTerms,
-                      activeColor: const Color(0xFFE50914),
-                      side: const BorderSide(color: Colors.white38),
-                      onChanged: (v) => setState(() => _agreeTerms = v ?? true),
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _agreeTerms,
+                        activeColor: Colors.white,
+                        checkColor: Colors.black,
+                        side: const BorderSide(color: Color(0xFF3F3F46)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        onChanged: (val) => setState(() => _agreeTerms = val ?? false),
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'I agree to the Terms of Service & Privacy Policy',
-                        style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11.5),
+                        style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 12),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
-                // Create account button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE50914),
-                      foregroundColor: Colors.white,
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: _isLoading ? null : _handleSignUp,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : Text(
-                            'CREATE ACCOUNT',
+                // Submit Button
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  onPressed: _isLoading ? null : _handleSignUp,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                        )
+                      : Text(
+                          'Create Account & Choose Plan',
+                          style: AppFonts.sCoreDream(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                ),
+                const SizedBox(height: 24),
+
+                // Switch to Sign In
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const SignInScreen()),
+                      );
+                    },
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Already have an account? ',
+                        style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 13),
+                        children: [
+                          TextSpan(
+                            text: 'Sign In',
                             style: AppFonts.sCoreDream(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2.0,
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Link to Sign In
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 13),
+                        ],
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const SignInScreen()),
-                          );
-                        },
-                        child: Text(
-                          'Sign In',
-                          style: AppFonts.sCoreDream(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],

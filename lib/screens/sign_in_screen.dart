@@ -172,7 +172,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
                   ),
                 ),
@@ -213,7 +213,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE50914)),
+                      borderSide: const BorderSide(color: Colors.white),
                     ),
                   ),
                   onSubmitted: (_) => _handleSignIn(),
@@ -228,7 +228,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       children: [
                         Checkbox(
                           value: _rememberMe,
-                          activeColor: const Color(0xFFE50914),
+                          activeColor: Colors.white,
+                          checkColor: Colors.black,
                           side: const BorderSide(color: Colors.white38),
                           onChanged: (v) => setState(() => _rememberMe = v ?? true),
                         ),
@@ -253,7 +254,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       child: Text(
                         'Forgot password?',
                         style: AppFonts.sCoreDream(
-                          color: const Color(0xFFE50914),
+                          color: Colors.white70,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -335,9 +336,10 @@ class _SignInScreenState extends State<SignInScreen> {
                         child: Text(
                           'Sign Up',
                           style: AppFonts.sCoreDream(
-                            color: const Color(0xFFE50914),
+                            color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ),

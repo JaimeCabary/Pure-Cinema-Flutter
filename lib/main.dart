@@ -6,12 +6,12 @@ import 'screens/splash_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Enforce solid deep black status bar and navigation bar across all devices
+  // Enforce deep OLED black status bar and navigation bar with crisp white icons
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF050505),
-      statusBarBrightness: Brightness.dark, // iOS: Light text/battery on solid black
-      statusBarIconBrightness: Brightness.light, // Android: Light text/battery
+      statusBarBrightness: Brightness.dark, // iOS: Light icons on black
+      statusBarIconBrightness: Brightness.light, // Android: Light icons
       systemNavigationBarColor: Color(0xFF050505),
       systemNavigationBarIconBrightness: Brightness.light,
       systemNavigationBarDividerColor: Colors.transparent,
@@ -46,8 +46,9 @@ class PureCinemaApp extends StatelessWidget {
         ),
         colorScheme: const ColorScheme.dark(
           primary: Colors.white,
-          secondary: Color(0xFFE50914),
+          secondary: Color(0xFFE4E4E7),
           surface: Color(0xFF0C0C0C),
+          surfaceContainerLowest: Color(0xFF050505),
         ),
         textTheme: GoogleFonts.outfitTextTheme(
           ThemeData.dark().textTheme,

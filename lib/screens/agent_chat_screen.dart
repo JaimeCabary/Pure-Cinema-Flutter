@@ -35,7 +35,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
     _messages.add(
       AgentChatMessage(
         role: 'assistant',
-        content: '🎬 **Welcome to Pure Cinema AI Agent!**\nPowered by Google GenAI ADK. Ask me for movie recommendations, film trivia, or commands to navigate your app.',
+        content: '🎬 **Welcome to Pure Cinema AI CineBot!**\nPowered by Google GenAI ADK. Ask me for movie recommendations, film trivia, or commands to navigate your app.',
       ),
     );
   }
@@ -119,42 +119,46 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
     final isUser = msg.role == 'user';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
             Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
+                color: const Color(0xFF18181B),
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(color: const Color(0xFF636366), width: 1.0),
+                border: Border.all(color: const Color(0xFF3F3F46)),
               ),
-              child: const Center(
-                child: Icon(Icons.smart_toy_rounded, color: Color(0xFFF2F2F7), size: 20),
-              ),
+              child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 10),
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isUser ? const Color(0xFFE50914).withValues(alpha: 0.9) : const Color(0xFF1E1E2C),
-                borderRadius: BorderRadius.circular(16).copyWith(
-                  bottomLeft: isUser ? const Radius.circular(16) : const Radius.circular(0),
-                  bottomRight: isUser ? const Radius.circular(0) : const Radius.circular(16),
+                // Monochrome: Solid White for User, Sleek Obsidian Zinc for Assistant
+                color: isUser ? Colors.white : const Color(0xFF121214),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isUser ? 16 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 16),
                 ),
                 border: Border.all(
-                  color: isUser ? const Color(0xFFE50914) : Colors.purpleAccent.withValues(alpha: 0.3),
+                  color: isUser ? Colors.white : const Color(0xFF27272A),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,54 +166,27 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                   Text(
                     msg.content,
                     style: AppFonts.sCoreDream(
-                      color: Colors.white,
+                      color: isUser ? Colors.black : Colors.white,
                       fontSize: 13.5,
-                      height: 1.4,
+                      fontWeight: isUser ? FontWeight.w700 : FontWeight.w400,
+                      height: 1.45,
                     ),
                   ),
-                  if (msg.actions.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: msg.actions.map((act) {
-                        final type = act['type'] as String?;
-                        final payload = act['payload'] as Map<String, dynamic>? ?? {};
-                        final label = type == 'OPEN_MOVIE'
-                            ? '▶ Play ${payload['title'] ?? 'Movie'}'
-                            : type == 'NAVIGATE_TAB'
-                                ? '📌 Go to Section'
-                                : '✨ Take Action';
-
-                        return ElevatedButton.icon(
-                          onPressed: () {
-                            if (type == 'NAVIGATE_TAB' && widget.onNavigateTab != null) {
-                              Navigator.of(context).pop();
-                              widget.onNavigateTab!(payload['index'] as int? ?? 0);
-                            } else if (type == 'OPEN_MOVIE' && widget.onOpenMovie != null) {
-                              Navigator.of(context).pop();
-                              widget.onOpenMovie!(payload['movieId'] as int? ?? 157336);
-                            }
-                          },
-                          icon: const Icon(Icons.play_arrow_rounded, size: 16, color: Colors.white),
-                          label: Text(label, style: AppFonts.sCoreDream(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple.shade700,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
           if (isUser) ...[
             const SizedBox(width: 10),
-            const CircleAvatar(
-              radius: 16,
-              backgroundColor: Color(0xFFE50914),
-              child: Icon(Icons.person, size: 18, color: Colors.white),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFD4D4D8)),
+              ),
+              child: const Icon(Icons.person, color: Colors.black, size: 18),
             ),
           ],
         ],
@@ -222,159 +199,223 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: Color(0xFF0F0F1A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: Color(0xFF050505),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(
+          top: BorderSide(color: Color(0xFF27272A), width: 1),
+        ),
       ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF161626),
-          elevation: 0,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 30),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Row(
-            children: [
-              // Silicon Metal Robot Avatar in Header
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3A3A3C), Color(0xFF1C1C1E)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(color: const Color(0xFF636366), width: 1.0),
-                ),
-                child: const Center(
-                  child: Icon(Icons.smart_toy_rounded, color: Color(0xFFF2F2F7), size: 22),
-                ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0C0C0E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                bottom: BorderSide(color: Color(0xFF1F1F23)),
               ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF18181B),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF3F3F46)),
+                  ),
+                  child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Pure Cinema AI CineBot',
-                        style: AppFonts.sCoreDream(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
+                      Row(
+                        children: [
+                          Text(
+                            'Pure Cinema AI CineBot',
+                            style: AppFonts.sCoreDream(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.white70,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0A84FF),
-                          shape: BoxShape.circle,
+                      const SizedBox(height: 2),
+                      Text(
+                        'Powered by Google GenAI ADK',
+                        style: AppFonts.sCoreDream(
+                          color: const Color(0xFFA1A1AA),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  Text(
-                    'Powered by Google GenAI ADK',
-                    style: AppFonts.sCoreDream(fontSize: 10, color: Colors.white54),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                itemCount: _messages.length,
-                itemBuilder: (ctx, idx) => _buildMessageItem(_messages[idx]),
-              ),
-            ),
-            if (_isLoading)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.purpleAccent),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Agent is thinking...', style: AppFonts.sCoreDream(color: Colors.grey, fontSize: 11)),
-                  ],
                 ),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
 
-            // Suggested prompt pills
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _suggestedPrompts.length,
-                itemBuilder: (ctx, idx) {
-                  final prompt = _suggestedPrompts[idx];
+          // Messages List
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index < _messages.length) {
+                  return _buildMessageItem(_messages[index]);
+                } else {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ActionChip(
-                      backgroundColor: const Color(0xFF26263A),
-                      label: Text(
-                        prompt,
-                        style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
-                      ),
-                      onPressed: () => _handleSubmitted(prompt),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF18181B),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFF3F3F46)),
+                          ),
+                          child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 16),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF121214),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF27272A)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'CineBot is thinking...',
+                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                  );
+                }
+              },
+            ),
+          ),
+
+          // Suggested Prompts
+          if (_suggestedPrompts.isNotEmpty)
+            Container(
+              height: 40,
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _suggestedPrompts.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final prompt = _suggestedPrompts[index];
+                  return ActionChip(
+                    backgroundColor: const Color(0xFF121214),
+                    side: const BorderSide(color: Color(0xFF27272A)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    label: Text(
+                      prompt,
+                      style: AppFonts.sCoreDream(color: const Color(0xFFE4E4E7), fontSize: 11),
+                    ),
+                    onPressed: () => _handleSubmitted(prompt),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 8),
 
-            // Input Bar
-            Container(
-              padding: const EdgeInsets.all(12),
-              color: const Color(0xFF161626),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _textController,
-                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'Ask Pure Cinema AI Bot...',
-                          hintStyle: AppFonts.sCoreDream(color: Colors.grey.shade500, fontSize: 12),
-                          filled: true,
-                          fillColor: const Color(0xFF252538),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onSubmitted: _handleSubmitted,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: () => _handleSubmitted(_textController.text),
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                      style: IconButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
-                    ),
-                  ],
-                ),
+          // Input Bar
+          Container(
+            padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0C0C0E),
+              border: Border(
+                top: BorderSide(color: Color(0xFF1F1F23)),
               ),
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF121214),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFF27272A)),
+                    ),
+                    child: TextField(
+                      controller: _textController,
+                      style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Ask Pure Cinema AI CineBot...',
+                        hintStyle: AppFonts.sCoreDream(color: const Color(0xFF71717A), fontSize: 13),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        border: InputBorder.none,
+                      ),
+                      onSubmitted: _handleSubmitted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Solid White Circular Send Button with Black Icon
+                GestureDetector(
+                  onTap: () => _handleSubmitted(_textController.text),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.arrow_upward_rounded, color: Colors.black, size: 22),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

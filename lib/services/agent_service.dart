@@ -16,13 +16,6 @@ class AgentChatMessage {
 
 class AgentService {
   static const String _productionUrl = 'https://pure-cinema-backend.onrender.com';
-  static const List<String> _candidateUrls = [
-    'https://pure-cinema-backend.onrender.com',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ];
-
-  static String _activeBaseUrl = 'https://pure-cinema-backend.onrender.com';
 
   static String get baseUrl {
     if (kIsWeb) {
@@ -55,79 +48,26 @@ class AgentService {
     try {
       final response = await http
           .post(Uri.parse('$baseUrl/api/agent/chat'), headers: headers, body: bodyStr)
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        return {
+          'success': false,
+          'reply': '⚠️ Backend returned status ${response.statusCode}. Please verify your Gemini API key in Render.',
+          'actions': [],
+          'suggestedPrompts': ['Recommend sci-fi movies', 'Go to Watchlist', 'Live TV']
+        };
       }
     } catch (e) {
-      // Try fallback ports
-      for (final candidate in _candidateUrls) {
-        if (candidate == _activeBaseUrl) continue;
-        try {
-          final response = await http
-              .post(Uri.parse('$candidate/api/agent/chat'), headers: headers, body: bodyStr)
-              .timeout(const Duration(seconds: 3));
-          if (response.statusCode == 200) {
-            _activeBaseUrl = candidate;
-            return json.decode(response.body) as Map<String, dynamic>;
-          }
-        } catch (_) {}
-      }
-    }
-
-    // Local client-side fallback if backend is starting or offline
-    return _buildLocalFallbackResponse(message);
-  }
-
-  static Map<String, dynamic> _buildLocalFallbackResponse(String message) {
-    final lower = message.toLowerCase();
-    if (lower.contains('watchlist') || lower.contains('saved')) {
+      debugPrint('Agent chat network error: $e');
       return {
-        'success': true,
-        'reply': 'Taking you to your saved Watchlist!',
-        'actions': [
-          {'type': 'NAVIGATE_TAB', 'payload': {'index': 2}}
-        ],
-        'suggestedPrompts': ['Recommend Sci-Fi movies', 'Who is Nolan?', 'Back to Home']
+        'success': false,
+        'reply': '⚠️ Could not connect to AI backend. Make sure https://pure-cinema-backend.onrender.com is online.',
+        'actions': [],
+        'suggestedPrompts': ['Recommend movies', 'Open Watchlist', 'Live TV']
       };
     }
-
-    if (lower.contains('live') || lower.contains('channel')) {
-      return {
-        'success': true,
-        'reply': 'Opening Live TV channels for you!',
-        'actions': [
-          {'type': 'NAVIGATE_TAB', 'payload': {'index': 3}}
-        ],
-        'suggestedPrompts': ['Search news', 'Recommend movies', 'Go to Home']
-      };
-    }
-
-    if (lower.contains('interstellar')) {
-      return {
-        'success': true,
-        'reply': '🚀 **Interstellar (2014)**\nDirected by Christopher Nolan. A team of explorers travel through a wormhole in space to ensure humanity\'s survival.',
-        'actions': [
-          {
-            'type': 'OPEN_MOVIE',
-            'payload': {'movieId': 157336, 'title': 'Interstellar'}
-          }
-        ],
-        'suggestedPrompts': ['Who is Christopher Nolan?', 'Inception', 'Watchlist']
-      };
-    }
-
-    return {
-      'success': true,
-      'reply': '🍿 **Pure Cinema AI Assistant**\nI am ready to help you discover top movies, navigate channels, or check your watchlist!',
-      'actions': [],
-      'suggestedPrompts': [
-        'Recommend sci-fi movies',
-        'Go to Watchlist',
-        'Top rated action movies',
-        'Live TV'
-      ]
-    };
   }
 }

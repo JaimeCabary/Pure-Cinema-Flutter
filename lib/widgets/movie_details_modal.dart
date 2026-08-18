@@ -170,12 +170,12 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE50914),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'OFFICIAL TRAILER',
-                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                        style: AppFonts.sCoreDream(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -251,8 +251,8 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE50914),
-                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
@@ -397,13 +397,13 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE50914),
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'TRAILER',
                                 style: AppFonts.sCoreDream(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -649,7 +649,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       ),
                     )
                   else if (_cast.isEmpty)

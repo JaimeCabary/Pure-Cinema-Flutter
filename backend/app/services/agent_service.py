@@ -1,5 +1,6 @@
 import json
 import logging
+import httpx
 from typing import List, Dict, Any, Optional
 from app.config import settings
 from app.models.schemas import AgentChatRequest, AgentChatResponse, ActionCommand
@@ -18,7 +19,7 @@ Your goals:
    - NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
    - ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
 
-Keep responses friendly, elegant, cinematic, and concise. Format titles in bold.
+Keep responses friendly, elegant, cinematic, and concise. Format movie titles in bold.
 """
 
 # Free-tier model rotation priority list
@@ -45,8 +46,8 @@ class AgentService:
             "Who directed Interstellar?"
         ]
 
-        # 1. Instant local intent matcher for sub-millisecond tab navigation
-        if "watchlist" in user_lower or "my list" in user_lower or "saved movies" in user_lower:
+        # 1. Quick Navigation Intent Matching
+        if user_lower in ["watchlist", "my list", "open watchlist", "show watchlist"]:
             actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 3}))
             return AgentChatResponse(
                 success=True,
@@ -55,7 +56,7 @@ class AgentService:
                 suggestedPrompts=["What should I watch next?", "Search sci-fi movies", "Go back to Home"]
             )
 
-        if "live tv" in user_lower or "channels" in user_lower or "broadcast" in user_lower or "iptv" in user_lower:
+        if user_lower in ["live tv", "channels", "open live tv", "live stream", "iptv"]:
             actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 1}))
             return AgentChatResponse(
                 success=True,
@@ -64,64 +65,71 @@ class AgentService:
                 suggestedPrompts=["Find news channels", "Recommend movies", "Go to Home"]
             )
 
-        if "search" in user_lower and len(user_lower.split()) <= 4:
-            clean_q = user_lower.replace("search", "").replace("for", "").strip()
-            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 2}))
-            return AgentChatResponse(
-                success=True,
-                reply=f"🔍 Opening **Search** for *\"{clean_q}\"*.",
-                actions=actions,
-                suggestedPrompts=["Show trending movies", "Open Live TV", "Go to Watchlist"]
-            )
+        # 2. Direct Google Gemini Call with Model Rotator
+        gemini_key = settings.GEMINI_API_KEY.strip()
+        if gemini_key:
+            # Build conversation history
+            contents = []
+            for h in req.history[-6:]:
+                role = "user" if h.get("role") == "user" else "model"
+                contents.append({"role": role, "parts": [{"text": h.get("content", "")}]})
 
-        # 2. Google GenAI SDK (ADK) with Multi-Model Rotator over Free Models
-        if settings.GEMINI_API_KEY:
-            try:
-                from google import genai
-                from google.genai import types
+            contents.append({
+                "role": "user",
+                "parts": [{"text": f"Context - Current Screen: {req.currentScreen or 'Home'}\nUser: {user_message}"}]
+            })
 
-                client = genai.Client(api_key=settings.GEMINI_API_KEY)
-                prompt = f"{SYSTEM_INSTRUCTION}\nUser query: {user_message}\nCurrent screen: {req.currentScreen or 'Home'}"
+            payload = {
+                "system_instruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 800,
+                }
+            }
 
-                # Model Rotator Loop
-                for model_name in FREE_TIER_MODELS:
+            async with httpx.AsyncClient(timeout=12.0) as client:
+                for model in FREE_TIER_MODELS:
                     try:
-                        logger.info(f"Invoking GenAI ADK with model: {model_name}")
-                        response = client.models.generate_content(
-                            model=model_name,
-                            contents=prompt
-                        )
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
+                        res = await client.post(url, json=payload)
+                        if res.status_code == 200:
+                            data = res.json()
+                            candidates = data.get("candidates", [])
+                            if candidates and len(candidates) > 0:
+                                text_parts = candidates[0].get("content", {}).get("parts", [])
+                                reply_text = "".join([p.get("text", "") for p in text_parts])
+                                if reply_text:
+                                    # Detect movie query intent for automatic app navigation
+                                    if "search" in user_lower or "recommend" in user_lower or "find" in user_lower:
+                                        clean_q = user_lower.replace("search", "").replace("recommend", "").replace("find", "").strip()
+                                        if clean_q and len(clean_q) > 2:
+                                            actions.append(ActionCommand(type="SEARCH_MOVIE", payload={"query": clean_q}))
 
-                        if response and response.text:
-                            reply_text = response.text
-
-                            # Extract movie query intent if user asked for suggestions
-                            if "search" in user_lower or "find" in user_lower or "recommend" in user_lower:
-                                clean_query = user_lower.replace("recommend", "").replace("find", "").replace("search", "").strip()
-                                if clean_query:
-                                    actions.append(ActionCommand(type="SEARCH_MOVIE", payload={"query": clean_query}))
-
-                            return AgentChatResponse(
-                                success=True,
-                                reply=reply_text,
-                                actions=actions,
-                                suggestedPrompts=suggested_prompts
-                            )
-                    except Exception as model_err:
-                        logger.warning(f"Model {model_name} failed or rate-limited: {model_err}. Rotating to next free model...")
+                                    return AgentChatResponse(
+                                        success=True,
+                                        reply=reply_text,
+                                        actions=actions,
+                                        suggestedPrompts=suggested_prompts
+                                    )
+                        elif res.status_code == 429:
+                            logger.warning(f"Model {model} rate limited (429). Rotating to next free model...")
+                            continue
+                        else:
+                            logger.warning(f"Model {model} returned HTTP {res.status_code}: {res.text}. Rotating...")
+                            continue
+                    except Exception as err:
+                        logger.warning(f"Error calling model {model}: {err}. Rotating...")
                         continue
 
-            except Exception as e:
-                logger.warning(f"Google GenAI ADK client error: {e}. Falling back to TMDB-assisted concierge.")
-
-        # 3. Dynamic TMDB Semantic Concierge Fallback
+        # 3. Dynamic TMDB Search Fallback if Gemini key is unset or rate limited
         search_results = await TMDBService.search_movies(user_message)
         if search_results and len(search_results) > 0:
             top_movie = search_results[0]
             actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
             
-            movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) - ⭐ {m.voteAverage}/10" for m in search_results[:3]])
-            reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\nTap below to watch **{top_movie.title}** right now!"
+            movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) — ⭐ {m.voteAverage}/10\n  *{m.overview[:120]}...*" for m in search_results[:3]])
+            reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\n🎬 Tap below to watch **{top_movie.title}**!"
             
             return AgentChatResponse(
                 success=True,
@@ -130,10 +138,10 @@ class AgentService:
                 suggestedPrompts=suggested_prompts
             )
 
-        # Standard Concierge Response
+        # 4. Clear Informative Response
         return AgentChatResponse(
             success=True,
-            reply="🍿 **Welcome to Pure Cinema AI CineBot!**\nI can recommend blockbusters, navigate to your watchlist or Live TV, or answer cinema trivia. Ask me anything like *\"Recommend mind-bending sci-fi movies\"*!",
+            reply=f"🎬 **Pure Cinema AI Assistant**\nI'm ready to help you discover films and TV broadcasts! Try asking:\n• *\"Recommend mind-bending sci-fi movies\"*\n• *\"Who starred in Interstellar?\"*\n• *\"Open my Watchlist\"*",
             actions=[],
             suggestedPrompts=suggested_prompts
         )

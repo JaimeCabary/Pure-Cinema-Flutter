@@ -160,13 +160,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE50914),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     _slides[_currentPage]['badge']!,
                     style: AppFonts.sCoreDream(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.0,

@@ -4,14 +4,16 @@ import '../services/auth_service.dart';
 import '../theme/fonts.dart';
 
 class SubscriptionModal extends StatefulWidget {
-  const SubscriptionModal({super.key});
+  final VoidCallback? onCompleted;
 
-  static Future<void> show(BuildContext context) {
+  const SubscriptionModal({super.key, this.onCompleted});
+
+  static Future<void> show(BuildContext context, {VoidCallback? onCompleted}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const SubscriptionModal(),
+      builder: (_) => SubscriptionModal(onCompleted: onCompleted),
     );
   }
 
@@ -23,7 +25,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
   List<SubscriptionPlan> _plans = PaymentService.defaultPlans;
   int _selectedPlanIndex = 0;
   bool _isLoading = false;
-  bool _mockMode = true; // Enabled by default for effortless testing without real money
+  bool _mockMode = true; // Paystack test mock by default
   bool _isSuccess = false;
   String? _successRef;
 
@@ -58,7 +60,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
     final data = initRes['data'] as Map<String, dynamic>? ?? {};
     final ref = data['reference'] as String? ?? 'pstk_mock_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Simulate brief network delay for realism
+    // Simulate brief network verification delay for realism
     await Future.delayed(const Duration(milliseconds: 900));
 
     // 2. Verify Transaction
@@ -74,12 +76,13 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
         _isSuccess = true;
         _successRef = ref;
       });
+      widget.onCompleted?.call();
     } else {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment could not be completed.', style: AppFonts.sCoreDream()),
-          backgroundColor: Colors.redAccent,
+          content: Text('Payment could not be completed.', style: AppFonts.sCoreDream(color: Colors.white)),
+          backgroundColor: const Color(0xFF18181B),
         ),
       );
     }
@@ -90,8 +93,11 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       decoration: const BoxDecoration(
-        color: Color(0xFF0D0D11),
+        color: Color(0xFF050505),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(color: Color(0xFF27272A), width: 1),
+        ),
       ),
       child: SafeArea(
         child: Column(
@@ -120,8 +126,9 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE50914),
+                          color: const Color(0xFF18181B),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF3F3F46)),
                         ),
                         child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 20),
                       ),
@@ -138,9 +145,9 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
                             ),
                           ),
                           Text(
-                            'Paystack Secure Checkout',
+                            'Paystack 4K Ultra Checkout',
                             style: AppFonts.sCoreDream(
-                              color: const Color(0xFF00C3F7),
+                              color: const Color(0xFFA1A1AA),
                               fontSize: 11,
                             ),
                           ),
@@ -149,15 +156,15 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white60, size: 20),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white60),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
+            const Divider(color: Color(0xFF1F1F23), height: 20),
 
-            const Divider(color: Color(0xFF1C1C24), height: 24),
-
+            // Content
             Expanded(
               child: _isSuccess ? _buildSuccessView() : _buildPlanSelectionView(),
             ),
@@ -168,266 +175,269 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
   }
 
   Widget _buildPlanSelectionView() {
-    return SingleChildScrollView(
+    return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Mock Mode Switch Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: _mockMode ? const Color(0xFF132219) : const Color(0xFF1A1A22),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _mockMode ? const Color(0xFF00FF66).withValues(alpha: 0.4) : const Color(0xFF2E2E38),
+      children: [
+        // Mode switch
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF121214),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF27272A)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.verified_user_outlined, color: Colors.white70, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Paystack Test Mock Mode',
+                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
+                  ),
+                ],
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _mockMode ? Icons.bolt_rounded : Icons.credit_card_rounded,
-                  color: _mockMode ? const Color(0xFF00FF66) : Colors.white70,
-                  size: 20,
+              Switch(
+                value: _mockMode,
+                activeColor: Colors.white,
+                activeTrackColor: const Color(0xFF3F3F46),
+                onChanged: (val) => setState(() => _mockMode = val),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Plans List
+        Text(
+          'SELECT A MEMBERSHIP PLAN',
+          style: AppFonts.sCoreDream(
+            color: const Color(0xFFA1A1AA),
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        ...List.generate(_plans.length, (index) {
+          final plan = _plans[index];
+          final isSelected = _selectedPlanIndex == index;
+
+          return GestureDetector(
+            onTap: () => setState(() => _selectedPlanIndex = index),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF18181B) : const Color(0xFF0F0F11),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? Colors.white : const Color(0xFF27272A),
+                  width: isSelected ? 1.5 : 1.0,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          blurRadius: 14,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                            color: isSelected ? Colors.white : Colors.white38,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            plan.name,
+                            style: AppFonts.sCoreDream(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (plan.badge != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            plan.badge!,
+                            style: AppFonts.sCoreDream(
+                              color: Colors.black,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        _mockMode ? 'Mock Test Payment (Instant)' : 'Live Paystack Gateway',
+                        '₦${plan.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                         style: AppFonts.sCoreDream(
                           color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
+                      const SizedBox(width: 6),
                       Text(
-                        _mockMode ? 'Simulates payment approval without debiting real card' : 'Connects to live Paystack checkout',
-                        style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 10),
+                        '/ ${plan.period}',
+                        style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 12),
                       ),
                     ],
                   ),
-                ),
-                Switch(
-                  value: _mockMode,
-                  activeColor: const Color(0xFF00FF66),
-                  onChanged: (val) => setState(() => _mockMode = val),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Text(
-            'CHOOSE YOUR CINEMA PASS',
-            style: AppFonts.sCoreDream(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Plan Cards
-          ...List.generate(_plans.length, (index) {
-            final plan = _plans[index];
-            final isSelected = _selectedPlanIndex == index;
-
-            return GestureDetector(
-              onTap: () => setState(() => _selectedPlanIndex = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF1E1528) : const Color(0xFF14141A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFFE50914) : const Color(0xFF22222E),
-                    width: isSelected ? 1.8 : 1.0,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              plan.name,
-                              style: AppFonts.sCoreDream(
-                                color: Colors.white,
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.bold,
-                              ),
+                  const SizedBox(height: 12),
+                  const Divider(color: Color(0xFF27272A), height: 1),
+                  const SizedBox(height: 10),
+                  ...plan.features.map(
+                    (f) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 14),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              f,
+                              style: AppFonts.sCoreDream(color: const Color(0xFFD4D4D8), fontSize: 12),
                             ),
-                            if (plan.badge != null) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE50914),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  plan.badge!,
-                                  style: AppFonts.sCoreDream(
-                                    color: Colors.white,
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        Text(
-                          '₦${plan.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
-                          style: AppFonts.sCoreDream(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Billed ${plan.period}',
-                      style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 11),
-                    ),
-                    const SizedBox(height: 12),
-                    ...plan.features.map(
-                      (f) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle_rounded, color: Color(0xFF4ADE80), size: 14),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                f,
-                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11.5),
-                              ),
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          }),
-
-          const SizedBox(height: 16),
-
-          // Pay Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE50914),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: _isLoading ? null : _processPayment,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : Text(
-                      'PAY VIA PAYSTACK (₦${_plans[_selectedPlanIndex].price})',
-                      style: AppFonts.sCoreDream(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
             ),
+          );
+        }),
+
+        const SizedBox(height: 10),
+
+        // Paystack security badge
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline_rounded, color: Colors.white38, size: 14),
+            const SizedBox(width: 6),
+            Text(
+              'Secured by Paystack 256-Bit SSL Encryption',
+              style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Checkout Button
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            elevation: 0,
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
+          onPressed: _isLoading ? null : _processPayment,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                )
+              : Text(
+                  'Subscribe Now • ₦${_plans[_selectedPlanIndex].price}',
+                  style: AppFonts.sCoreDream(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
   Widget _buildSuccessView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: const BoxDecoration(
-                color: Color(0xFF00FF66),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_rounded, color: Colors.black, size: 44),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'VIP Access Activated!',
-              style: AppFonts.sCoreDream(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your Pure Cinema VIP Pass is now active. Enjoy ad-free 4K master streaming and offline downloads.',
-              textAlign: TextAlign.center,
-              style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 13, height: 1.4),
-            ),
-            const SizedBox(height: 16),
-            if (_successRef != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF181822),
-                  borderRadius: BorderRadius.circular(6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  blurRadius: 20,
                 ),
-                child: Text(
-                  'Reference: $_successRef',
-                  style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 10),
-                ),
-              ),
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'START WATCHING IN VIP',
-                  style: AppFonts.sCoreDream(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+            child: const Icon(Icons.check_rounded, color: Colors.black, size: 48),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'VIP Membership Activated!',
+            style: AppFonts.sCoreDream(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'You now have unlimited 4K Ultra streaming, ad-free live IPTV, and AI CineBot access.',
+            textAlign: TextAlign.center,
+            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF121214),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF27272A)),
+            ),
+            child: Text(
+              'Ref: ${_successRef ?? "PSTK_VIP"}',
+              style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11),
+            ),
+          ),
+          const SizedBox(height: 28),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Start Watching 4K Cinema', style: AppFonts.sCoreDream(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

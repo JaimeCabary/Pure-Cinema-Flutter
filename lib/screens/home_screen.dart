@@ -96,37 +96,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     final results = await Future.wait([
+      TMDBService.fetchNowPlaying(),
       TMDBService.fetchTrending(),
       TMDBService.fetchPopular(),
-      TMDBService.fetchNowPlaying(),
       TMDBService.fetchTopRated(),
       TMDBService.fetchAnimation(),
     ]);
 
     if (!mounted) return;
     setState(() {
-      _trending = results[0];
-      _popular = results[1];
-      _nowPlaying = results[2];
-      _topRated = results[3];
-      _animation = results[4];
-      
-      // Curate "Best Picks": Highest rated acclaimed masterpieces and verified open cinematic movies
-      final Set<int> pickedIds = {};
-      _bestPicks = [];
-      for (final m in [...TMDBService.fallbackMovies, ..._topRated, ..._trending]) {
-        if (!pickedIds.contains(m.id) && m.voteAverage >= 7.8) {
-          pickedIds.add(m.id);
-          _bestPicks.add(m);
-        }
-      }
+      _bestPicks = results[0].isNotEmpty ? results[0] : TMDBService.bestPicksFallbacks;
+      _trending = results[1].isNotEmpty ? results[1] : TMDBService.trendingFallbacks;
+      _popular = results[2].isNotEmpty ? results[2] : TMDBService.popularFallbacks;
+      _topRated = results[3].isNotEmpty ? results[3] : TMDBService.topRatedFallbacks;
+      _animation = results[4].isNotEmpty ? results[4] : TMDBService.animationFallbacks;
+      _nowPlaying = _popular;
 
-      // Combine top distinctive hit blockbusters for the hero carousel
+      // Select diverse hero movies
       final Set<int> added = {};
       _heroMovies = [];
-      
-      final pool = [..._bestPicks, ..._trending, ..._popular];
-      for (final m in pool) {
+      for (final m in [..._bestPicks, ..._trending, ..._popular]) {
         if (!added.contains(m.id) && m.backdropPath != null && m.backdropPath!.isNotEmpty) {
           added.add(m.id);
           _heroMovies.add(m);
@@ -151,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(
         backgroundColor: Color(0xFF050505),
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
         ),
       );
     }
@@ -188,11 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 32,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _currentUser?.isAdmin == true
-                        ? const Color(0xFFE50914)
-                        : const Color(0xFF222222),
+                    color: const Color(0xFF18181B),
                     border: Border.all(
-                      color: _currentUser != null ? Colors.white70 : Colors.white24,
+                      color: _currentUser != null ? Colors.white : Colors.white24,
                       width: 1.2,
                     ),
                   ),
@@ -226,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _buildHeroCarousel(),
             ),
 
-          // Content Carousels with "Best Picks" header row
+          // Content Carousels with distinct category rows
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 60),
@@ -235,10 +222,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   _buildContentRow('★ Best Picks', _bestPicks, isFeatured: true),
                   _buildContentRow('Trending Now', _trending),
-                  _buildContentRow('Recommended For You', _popular.reversed.toList()),
-                  _buildContentRow('New Releases', _nowPlaying),
-                  _buildContentRow('Kids & Family', _animation),
-                  _buildContentRow('Top Rated Classics', _topRated),
+                  _buildContentRow('Popular Blockbusters', _popular),
+                  _buildContentRow('Top Rated Masterpieces', _topRated),
+                  _buildContentRow('Animation & Anime', _animation),
                 ],
               ),
             ),
@@ -365,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       '${movie.matchScore}% Match',
                       style: AppFonts.sCoreDream(
-                        color: const Color(0xFF4ADE80),
+                        color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
@@ -499,18 +485,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE50914),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       'CURATED',
-                      style: AppFonts.sCoreDream(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900),
+                      style: AppFonts.sCoreDream(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
                     ),
                   ),
                 Text(
                   title,
                   style: AppFonts.sCoreDream(
-                    color: isFeatured ? const Color(0xFFFFD700) : Colors.white,
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,

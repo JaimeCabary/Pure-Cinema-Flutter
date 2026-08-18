@@ -119,7 +119,7 @@ class _AIAgentFabState extends State<AIAgentFab> with SingleTickerProviderStateM
                 size: 30,
               ),
 
-              // Subtle Minimalist LED Indicator (Clean Soft White / Light Blue)
+              // Subtle Minimalist LED Indicator (Clean Soft White)
               Positioned(
                 top: 9,
                 right: 12,
@@ -127,11 +127,11 @@ class _AIAgentFabState extends State<AIAgentFab> with SingleTickerProviderStateM
                   width: 5,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0A84FF),
+                    color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0A84FF).withValues(alpha: 0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         blurRadius: 4,
                         spreadRadius: 1,
                       ),

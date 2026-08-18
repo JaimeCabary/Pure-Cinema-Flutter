@@ -61,23 +61,23 @@ class _MainNavScreenState extends State<MainNavScreen> {
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
-              // Dark obsidian floating capsule container
-              color: const Color(0xFF0C120F),
+              // Crisp Ceramic Pure White Floating Dock Container
+              color: Colors.white,
               borderRadius: BorderRadius.circular(36),
               border: Border.all(
-                color: const Color(0xFF1E2822),
+                color: const Color(0xFFE4E4E7),
                 width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  blurRadius: 20,
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 28,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  blurRadius: 4,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  blurRadius: 6,
                   spreadRadius: 0,
                   offset: const Offset(0, -1),
                 ),
@@ -96,12 +96,21 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
                     padding: isSelected
-                        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
+                        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 9)
                         : const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      // Active selected: White pill with black text/icons (as in screenshot)
-                      color: isSelected ? Colors.white : Colors.transparent,
+                      // Active Selected: Clean Solid Black Pill with White Glyphs & Text
+                      color: isSelected ? const Color(0xFF09090B) : Colors.transparent,
                       borderRadius: BorderRadius.circular(24),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -112,15 +121,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
                             Icon(
                               item['icon'] as IconData,
                               size: 20,
-                              color: isSelected ? Colors.black : Colors.white60,
+                              color: isSelected ? Colors.white : const Color(0xFF27272A),
                             ),
                             if (item['isLive'] == true && !isSelected)
                               Positioned(
                                 top: -1,
                                 right: -2,
                                 child: Container(
-                                  width: 5,
-                                  height: 5,
+                                  width: 6,
+                                  height: 6,
                                   decoration: const BoxDecoration(
                                     color: Color(0xFFE50914),
                                     shape: BoxShape.circle,
@@ -134,7 +143,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                           Text(
                             item['label'] as String,
                             style: AppFonts.sCoreDream(
-                              color: Colors.black,
+                              color: Colors.white,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.2,
