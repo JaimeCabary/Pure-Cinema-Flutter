@@ -8,18 +8,27 @@ from app.services.tmdb_service import TMDBService
 logger = logging.getLogger("pure_cinema_agent")
 
 SYSTEM_INSTRUCTION = """
-You are Pure Cinema's AI Agent - an intelligent, movie-savvy cinema concierge assistant inside the Pure Cinema app.
+You are Pure Cinema's AI CineBot - an intelligent, movie-savvy cinema concierge assistant inside the Pure Cinema streaming platform.
 Your goals:
-1. Help users discover movies, TV shows, and live content based on their mood, genre preference, or natural language prompts.
-2. Provide concise, enthusiastic, and insightful answers about films, directors, cast, and trivia.
+1. Help users discover movies, TV shows, and live content based on mood, genre, cast, director, or natural language prompts.
+2. Provide concise, enthusiastic, and insightful answers about films, directors, cinematography, and trivia.
 3. Suggest interactive app actions using JSON action flags when appropriate:
    - OPEN_MOVIE: navigate directly to a movie watch screen. Payload: {"movieId": <id>, "title": "<title>"}
    - SEARCH_MOVIE: search movies matching a query. Payload: {"query": "<query>"}
-   - NAVIGATE_TAB: switch app tab (0: Home, 1: Search, 2: Watchlist, 3: Live TV, 4: Profile). Payload: {"index": <num>}
+   - NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
    - ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
 
-Keep responses friendly, elegant, and concise.
+Keep responses friendly, elegant, cinematic, and concise. Format titles in bold.
 """
+
+# Free-tier model rotation priority list
+FREE_TIER_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-lite",
+]
 
 class AgentService:
     @classmethod
@@ -31,88 +40,88 @@ class AgentService:
         suggested_prompts: List[str] = [
             "Recommend a mind-bending sci-fi movie",
             "Show me top rated action movies",
-            "Go to my Watchlist",
-            "Who starred in Interstellar?"
+            "Go to Live TV",
+            "Open my Watchlist",
+            "Who directed Interstellar?"
         ]
 
-        # 1. Check for explicit local intent matching for instant sub-millisecond response
+        # 1. Instant local intent matcher for sub-millisecond tab navigation
         if "watchlist" in user_lower or "my list" in user_lower or "saved movies" in user_lower:
-            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 2}))
+            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 3}))
             return AgentChatResponse(
                 success=True,
-                reply="Taking you straight to your Watchlist! Here you can find all your saved titles.",
+                reply="🎬 Taking you straight to your **Watchlist**! Here you can find all your saved titles.",
                 actions=actions,
                 suggestedPrompts=["What should I watch next?", "Search sci-fi movies", "Go back to Home"]
             )
 
-        if "live tv" in user_lower or "channels" in user_lower or "broadcast" in user_lower:
-            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 3}))
+        if "live tv" in user_lower or "channels" in user_lower or "broadcast" in user_lower or "iptv" in user_lower:
+            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 1}))
             return AgentChatResponse(
                 success=True,
-                reply="Navigating to Live TV channels. Sit back and enjoy the stream!",
+                reply="📺 Switching over to **Live TV Channels** with 10,000+ global broadcasts!",
                 actions=actions,
                 suggestedPrompts=["Find news channels", "Recommend movies", "Go to Home"]
             )
 
-        if "interstellar" in user_lower:
-            actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": 157336, "title": "Interstellar"}))
+        if "search" in user_lower and len(user_lower.split()) <= 4:
+            clean_q = user_lower.replace("search", "").replace("for", "").strip()
+            actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 2}))
             return AgentChatResponse(
                 success=True,
-                reply="🚀 **Interstellar (2014)**\nDirected by Christopher Nolan, Interstellar follows a team of explorers traveling through a wormhole in space to ensure humanity's survival. Starring Matthew McConaughey & Anne Hathaway.",
+                reply=f"🔍 Opening **Search** for *\"{clean_q}\"*.",
                 actions=actions,
-                suggestedPrompts=["Show similar sci-fi movies", "Who is Christopher Nolan?", "Add to Watchlist"]
+                suggestedPrompts=["Show trending movies", "Open Live TV", "Go to Watchlist"]
             )
 
-        if "inception" in user_lower:
-            actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": 27205, "title": "Inception"}))
-            return AgentChatResponse(
-                success=True,
-                reply="🌀 **Inception (2010)**\nA thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-                actions=actions,
-                suggestedPrompts=["Who directed Inception?", "Show action movies", "Go to Watchlist"]
-            )
-
-        # 2. Try Google GenAI SDK (ADK) if GEMINI_API_KEY is available
+        # 2. Google GenAI SDK (ADK) with Multi-Model Rotator over Free Models
         if settings.GEMINI_API_KEY:
             try:
                 from google import genai
                 from google.genai import types
 
                 client = genai.Client(api_key=settings.GEMINI_API_KEY)
-                
                 prompt = f"{SYSTEM_INSTRUCTION}\nUser query: {user_message}\nCurrent screen: {req.currentScreen or 'Home'}"
-                
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt
-                )
-                
-                if response and response.text:
-                    reply_text = response.text
-                    
-                    # Search movie trigger if user asked for recommendations
-                    if "search" in user_lower or "find" in user_lower or "recommend" in user_lower:
-                        clean_query = user_lower.replace("recommend", "").replace("find", "").replace("search", "").strip()
-                        if clean_query:
-                            actions.append(ActionCommand(type="SEARCH_MOVIE", payload={"query": clean_query}))
 
-                    return AgentChatResponse(
-                        success=True,
-                        reply=reply_text,
-                        actions=actions,
-                        suggestedPrompts=suggested_prompts
-                    )
+                # Model Rotator Loop
+                for model_name in FREE_TIER_MODELS:
+                    try:
+                        logger.info(f"Invoking GenAI ADK with model: {model_name}")
+                        response = client.models.generate_content(
+                            model=model_name,
+                            contents=prompt
+                        )
+
+                        if response and response.text:
+                            reply_text = response.text
+
+                            # Extract movie query intent if user asked for suggestions
+                            if "search" in user_lower or "find" in user_lower or "recommend" in user_lower:
+                                clean_query = user_lower.replace("recommend", "").replace("find", "").replace("search", "").strip()
+                                if clean_query:
+                                    actions.append(ActionCommand(type="SEARCH_MOVIE", payload={"query": clean_query}))
+
+                            return AgentChatResponse(
+                                success=True,
+                                reply=reply_text,
+                                actions=actions,
+                                suggestedPrompts=suggested_prompts
+                            )
+                    except Exception as model_err:
+                        logger.warning(f"Model {model_name} failed or rate-limited: {model_err}. Rotating to next free model...")
+                        continue
+
             except Exception as e:
-                logger.warning(f"Google GenAI SDK call failed: {e}. Falling back to TMDB-assisted agent response.")
+                logger.warning(f"Google GenAI ADK client error: {e}. Falling back to TMDB-assisted concierge.")
 
-        # 3. Dynamic TMDB Search & Intelligent Concierge Fallback
+        # 3. Dynamic TMDB Semantic Concierge Fallback
         search_results = await TMDBService.search_movies(user_message)
         if search_results and len(search_results) > 0:
             top_movie = search_results[0]
             actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
             
             movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) - ⭐ {m.voteAverage}/10" for m in search_results[:3]])
-            reply = f"Here are top cinema picks for your query **\"{user_message}\"**:\n\n{movie_list_str}\n\nClick below to start watching **{top_movie.title}**!"
+            reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\nTap below to watch **{top_movie.title}** right now!"
             
             return AgentChatResponse(
                 success=True,
@@ -124,7 +133,7 @@ class AgentService:
         # Standard Concierge Response
         return AgentChatResponse(
             success=True,
-            reply=f"🍿 I'm your Pure Cinema AI Agent! I can help you find blockbusters, navigate to your watchlist, or answer film trivia. Try searching for genres like 'Sci-Fi', 'Action', or 'Nolan films'!",
+            reply="🍿 **Welcome to Pure Cinema AI CineBot!**\nI can recommend blockbusters, navigate to your watchlist or Live TV, or answer cinema trivia. Ask me anything like *\"Recommend mind-bending sci-fi movies\"*!",
             actions=[],
             suggestedPrompts=suggested_prompts
         )
