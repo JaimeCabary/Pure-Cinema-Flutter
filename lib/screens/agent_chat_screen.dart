@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/agent_service.dart';
+import '../services/auth_service.dart';
 import '../theme/fonts.dart';
 
 class AgentChatScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = false;
+  String _userName = '';
   List<String> _suggestedPrompts = [
     'Recommend sci-fi movies',
     'Open my Watchlist',
@@ -32,12 +34,31 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
   @override
   void initState() {
     super.initState();
-    _messages.add(
-      AgentChatMessage(
-        role: 'assistant',
-        content: '🎬 **Welcome to Pure Cinema AI CineBot!**\nPowered by Google GenAI ADK. Ask me for movie recommendations, film trivia, or commands to navigate your app.',
-      ),
-    );
+    _initGreeting();
+  }
+
+  Future<void> _initGreeting() async {
+    final user = await AuthService.getCurrentUser();
+    String greetingName = '';
+    if (user != null && user.name.isNotEmpty) {
+      greetingName = user.name.split(' ').first;
+      _userName = greetingName;
+    }
+
+    final welcomeText = greetingName.isNotEmpty
+        ? 'Hi $greetingName, how can I help you today?'
+        : 'Hi there, how can I help you today?';
+
+    if (mounted) {
+      setState(() {
+        _messages.add(
+          AgentChatMessage(
+            role: 'assistant',
+            content: welcomeText,
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -115,8 +136,14 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
     }
   }
 
+  String _cleanContent(String content) {
+    // Cleanly strip raw markdown asterisks and emojis
+    return content.replaceAll('**', '').replaceAll('🎬 ', '').replaceAll('🍿 ', '');
+  }
+
   Widget _buildMessageItem(AgentChatMessage msg) {
     final isUser = msg.role == 'user';
+    final cleanedText = _cleanContent(msg.content);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -164,7 +191,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    msg.content,
+                    cleanedText,
                     style: AppFonts.sCoreDream(
                       color: isUser ? Colors.black : Colors.white,
                       fontSize: 13.5,
@@ -257,7 +284,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Powered by Google GenAI ADK',
+                        'AI Concierge',
                         style: AppFonts.sCoreDream(
                           color: const Color(0xFFA1A1AA),
                           fontSize: 10.5,
@@ -382,7 +409,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> {
                       controller: _textController,
                       style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'Ask Pure Cinema AI CineBot...',
+                        hintText: 'Ask CineBot...',
                         hintStyle: AppFonts.sCoreDream(color: const Color(0xFF71717A), fontSize: 13),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                         border: InputBorder.none,

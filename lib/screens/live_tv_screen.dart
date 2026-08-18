@@ -10,7 +10,14 @@ import '../theme/fonts.dart';
 class LiveTVScreen extends StatefulWidget {
   final LiveChannel? initialChannel;
   final bool isActive;
-  const LiveTVScreen({super.key, this.initialChannel, this.isActive = true});
+  final ValueChanged<bool>? onFullscreenChanged;
+
+  const LiveTVScreen({
+    super.key,
+    this.initialChannel,
+    this.isActive = true,
+    this.onFullscreenChanged,
+  });
 
   @override
   State<LiveTVScreen> createState() => _LiveTVScreenState();
@@ -230,6 +237,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
       _isFullscreen = !_isFullscreen;
       _showControls = true;
     });
+
+    widget.onFullscreenChanged?.call(_isFullscreen);
 
     if (_isFullscreen) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

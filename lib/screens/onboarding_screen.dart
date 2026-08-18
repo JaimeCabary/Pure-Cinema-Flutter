@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/fonts.dart';
-import '../widgets/cinema_logo.dart';
 import 'landing_screen.dart';
-import 'sign_in_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -19,36 +18,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _slides = [
     {
       'title': 'Masterpiece Cinema\nin True 4K Ultra HD',
-      'subtitle': 'Stream curated film masterpieces, Hollywood blockbusters, and award-winning motion pictures with high bitrate fidelity.',
+      'subtitle': 'Stream curated film masterpieces, Hollywood blockbusters, and award-winning motion pictures with high bitrates.',
+      'image': 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=1000&q=80',
       'badge': '4K HDR CINEMA',
-      'image': 'https://image.tmdb.org/t/p/original/xJHokMbljvjADYdit5fK5VQsXEG.jpg',
     },
     {
-      'title': '10,000+ Live TV\nWorldwide Broadcasts',
-      'subtitle': 'Experience seamless 60 FPS live sports, international news, cinema networks, and VLC network streaming on demand.',
-      'badge': 'GLOBAL LIVE TV',
-      'image': 'https://image.tmdb.org/t/p/original/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg',
+      'title': '10,000+ Worldwide\nLive TV Channels',
+      'subtitle': 'Experience seamless 60 FPS live sports, international news, cinema networks, and global broadcasts on demand.',
+      'image': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1000&q=80',
+      'badge': '60 FPS BROADCAST',
     },
     {
-      'title': 'Intelligent CineBot\nAI Film Companion',
-      'subtitle': 'Powered by Google GenAI. Discover hidden gems, navigate channels, and control your theater experience with natural speech.',
-      'badge': 'AI ASSISTANT',
-      'image': 'https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg',
+      'title': 'AI CineBot\nCinema Concierge',
+      'subtitle': 'Powered by Google GenAI ADK. Discover films tailored to your mood, query actors, and control your entire app experience.',
+      'image': 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1000&q=80',
+      'badge': 'AI CONCIERGE',
     },
   ];
 
-  void _nextPage() {
-    if (_currentPage < _slides.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOutCubic,
-      );
-    } else {
-      _finishOnboarding();
-    }
-  }
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_onboarding', true);
 
-  void _finishOnboarding() {
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const LandingScreen(),
@@ -84,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     imageUrl: slide['image']!,
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
-                    errorWidget: (_, __, ___) => Container(color: const Color(0xFF0A0A0A)),
+                    errorWidget: (_, __, ___) => Container(color: const Color(0xFF050505)),
                   ),
 
                   // Cinematic Dark Vignette & Multi-stop Gradients
@@ -108,16 +100,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
 
-          // Top App Bar with Cinema Logo & Skip button
+          // Top Header (Logo + Skip)
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      const CinemaLogoWidget(size: 24, animate: true),
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white70, width: 1.2),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'PURE CINEMA',
@@ -130,8 +132,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ],
                   ),
-                  TextButton(
-                    onPressed: _finishOnboarding,
+                  GestureDetector(
+                    onTap: _finishOnboarding,
                     child: Text(
                       'SKIP',
                       style: AppFonts.sCoreDream(
@@ -220,21 +222,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Primary Next / Get Started Button
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
-                      elevation: 6,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    onPressed: _nextPage,
+                    onPressed: () {
+                      if (_currentPage < _slides.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOutCubic,
+                        );
+                      } else {
+                        _finishOnboarding();
+                      }
+                    },
                     child: Text(
                       _currentPage == _slides.length - 1 ? 'GET STARTED' : 'CONTINUE',
                       style: AppFonts.sCoreDream(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
+                        letterSpacing: 2.0,
                       ),
                     ),
                   ),
