@@ -161,7 +161,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   void _startHideTimer() {
     _hideControlsTimer?.cancel();
     _hideControlsTimer = Timer(const Duration(seconds: 4), () {
-      if (mounted && _isPlaying && (_isFullscreen || _isChannelListCollapsed)) {
+      if (mounted && _isPlaying) {
         setState(() => _showControls = false);
       }
     });
@@ -478,51 +478,59 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             }
 
             // Mobile Layout
-            return Stack(
-              children: [
-                Column(
+            return OrientationBuilder(
+              builder: (context, orientation) {
+                final isLandscape = orientation == Orientation.landscape;
+                final screenH = MediaQuery.of(context).size.height;
+                final videoH = isLandscape
+                    ? screenH  // fill height in landscape
+                    : (_isChannelListCollapsed ? screenH * 0.82 : screenH * 0.30);
+
+                return Stack(
                   children: [
-                    // Video Player Container
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      height: _isChannelListCollapsed
-                          ? MediaQuery.of(context).size.height * 0.82
-                          : MediaQuery.of(context).size.height * 0.30,
-                      width: double.infinity,
-                      color: Colors.black,
-                      child: _buildVideoPlayer(),
+                    Column(
+                      children: [
+                        // Video Player Container
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          height: videoH,
+                          width: double.infinity,
+                          color: Colors.black,
+                          child: _buildVideoPlayer(),
+                        ),
+
+                        // Collapsible Channel Guide Body (hidden in landscape)
+                        if (!_isChannelListCollapsed && !isLandscape) ...[
+                          _buildGuideHeader(filteredChannels.length),
+                          _buildCategoryTabs(),
+                          _buildCountryChips(),
+                          _buildSearchField(),
+                          Expanded(child: _buildChannelList(filteredChannels)),
+                        ],
+                      ],
                     ),
 
-                    // Collapsible Channel Guide Body
-                    if (!_isChannelListCollapsed) ...[
-                      _buildGuideHeader(filteredChannels.length),
-                      _buildCategoryTabs(),
-                      _buildCountryChips(),
-                      _buildSearchField(),
-                      Expanded(child: _buildChannelList(filteredChannels)),
-                    ],
-                  ],
-                ),
-
-                // Floating Expand Guide Button when collapsed on mobile
-                if (_isChannelListCollapsed)
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: FloatingActionButton.extended(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      elevation: 8,
-                      onPressed: () => setState(() => _isChannelListCollapsed = false),
-                      icon: const Icon(Icons.list_alt_rounded, size: 18),
-                      label: Text(
-                        'SHOW CHANNELS',
-                        style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                    // Floating Expand Guide Button when collapsed on mobile (portrait only)
+                    if (_isChannelListCollapsed && !isLandscape)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: FloatingActionButton.extended(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          elevation: 8,
+                          onPressed: () => setState(() => _isChannelListCollapsed = false),
+                          icon: const Icon(Icons.list_alt_rounded, size: 18),
+                          label: Text(
+                            'SHOW CHANNELS',
+                            style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                );
+              },
             );
           },
         ),
@@ -640,154 +648,161 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           if (_indicatorText != null) _buildIndicatorBadge(),
 
           // Bottom Controls & Advanced Interactive Seeker
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black87, Colors.transparent],
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Interactive Seeker Slider
-                  if (_videoController != null && _videoController!.value.isInitialized)
-                    Column(
-                      children: [
-                        SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            trackHeight: 2.5,
-                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
-                            thumbColor: Colors.white,
-                            activeTrackColor: Colors.white,
-                            inactiveTrackColor: Colors.white24,
-                          ),
-                          child: Slider(
-                            value: _videoController!.value.position.inMilliseconds.toDouble().clamp(
-                                  0.0,
-                                  _videoController!.value.duration.inMilliseconds.toDouble() > 0
-                                      ? _videoController!.value.duration.inMilliseconds.toDouble()
-                                      : 100.0,
-                                ),
-                            max: _videoController!.value.duration.inMilliseconds.toDouble() > 0
-                                ? _videoController!.value.duration.inMilliseconds.toDouble()
-                                : 100.0,
-                            onChanged: (val) {
-                              _videoController!.seekTo(Duration(milliseconds: val.toInt()));
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _formatDuration(_videoController!.value.position),
-                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 10),
+          AnimatedOpacity(
+            opacity: _showControls ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: IgnorePointer(
+              ignoring: !_showControls,
+              child: Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [Colors.black87, Colors.transparent],
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Interactive Seeker Slider
+                      if (_videoController != null && _videoController!.value.isInitialized)
+                        Column(
+                          children: [
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                trackHeight: 2.5,
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
+                                thumbColor: Colors.white,
+                                activeTrackColor: Colors.white,
+                                inactiveTrackColor: Colors.white24,
                               ),
-                              Row(
+                              child: Slider(
+                                value: _videoController!.value.position.inMilliseconds.toDouble().clamp(
+                                      0.0,
+                                      _videoController!.value.duration.inMilliseconds.toDouble() > 0
+                                          ? _videoController!.value.duration.inMilliseconds.toDouble()
+                                          : 100.0,
+                                    ),
+                                max: _videoController!.value.duration.inMilliseconds.toDouble() > 0
+                                    ? _videoController!.value.duration.inMilliseconds.toDouble()
+                                    : 100.0,
+                                onChanged: (val) {
+                                  _videoController!.seekTo(Duration(milliseconds: val.toInt()));
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Container(
-                                    width: 4,
-                                    height: 4,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
                                   Text(
-                                    _videoController!.value.duration > Duration.zero
-                                        ? _formatDuration(_videoController!.value.duration)
-                                        : 'LIVE DVR',
-                                    style: AppFonts.sCoreDream(
-                                      color: Colors.white70,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    _formatDuration(_videoController!.value.position),
+                                    style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 10),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 4,
+                                        height: 4,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _videoController!.value.duration > Duration.zero
+                                            ? _formatDuration(_videoController!.value.duration)
+                                            : 'LIVE DVR',
+                                        style: AppFonts.sCoreDream(
+                                          color: Colors.white70,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
 
-                  const SizedBox(height: 2),
+                      const SizedBox(height: 2),
 
-                  // Control Buttons Row
-                  Row(
-                    children: [
-                      IconButton(
-                        iconSize: 20,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
-                        onPressed: _togglePlay,
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        iconSize: 18,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.replay_10, color: Colors.white70),
-                        onPressed: () => _skip(-10),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        iconSize: 18,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.forward_10, color: Colors.white70),
-                        onPressed: () => _skip(10),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        iconSize: 18,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up, color: Colors.white70),
-                        onPressed: _toggleMute,
-                      ),
-                      const Spacer(),
-
-                      // Speed Selector
-                      GestureDetector(
-                        onTap: _cycleSpeed,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                          decoration: BoxDecoration(
-                            color: Colors.white12,
-                            borderRadius: BorderRadius.circular(4),
+                      // Control Buttons Row
+                      Row(
+                        children: [
+                          IconButton(
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
+                            onPressed: _togglePlay,
                           ),
-                          child: Text(
-                            '${_playbackSpeed}x',
-                            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.replay_10, color: Colors.white70),
+                            onPressed: () => _skip(-10),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.forward_10, color: Colors.white70),
+                            onPressed: () => _skip(10),
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            iconSize: 18,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(_isMuted ? Icons.volume_off : Icons.volume_up, color: Colors.white70),
+                            onPressed: _toggleMute,
+                          ),
+                          const Spacer(),
 
-                      // Fullscreen Button
-                      IconButton(
-                        iconSize: 20,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(_isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: Colors.white),
-                        onPressed: _toggleFullscreen,
+                          // Speed Selector
+                          GestureDetector(
+                            onTap: _cycleSpeed,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                              decoration: BoxDecoration(
+                                color: Colors.white12,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${_playbackSpeed}x',
+                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // Fullscreen Button
+                          IconButton(
+                            iconSize: 20,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(_isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: Colors.white),
+                            onPressed: _toggleFullscreen,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -940,7 +955,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           Row(
             children: [
               Text(
-                'Live IPTV Guide',
+                'Live TV Guide',
                 style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
               ),
               if (IPTVService.isLoading) ...[
