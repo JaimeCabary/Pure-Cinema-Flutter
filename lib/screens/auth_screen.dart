@@ -506,7 +506,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                       style: GoogleFonts.outfit(
                                         color: _countdown > 0
                                             ? Colors.white30
-                                            : const Color(0xFFE50914),
+                                            : Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),

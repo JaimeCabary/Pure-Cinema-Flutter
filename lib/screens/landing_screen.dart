@@ -201,15 +201,16 @@ class _LandingScreenState extends State<LandingScreen> {
 
                     const SizedBox(height: 12),
 
-                    // Create Account Button (Secondary Red/Dark)
+                    // Create Account Button (Secondary Monochrome)
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE50914),
+                          backgroundColor: const Color(0xFF18181B),
                           foregroundColor: Colors.white,
-                          elevation: 3,
+                          elevation: 2,
+                          side: const BorderSide(color: Color(0xFF3F3F46)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),

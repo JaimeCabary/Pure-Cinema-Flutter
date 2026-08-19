@@ -267,14 +267,15 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFE50914).withValues(alpha: 0.15),
+                color: const Color(0xFF18181B),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF3F3F46)),
               ),
-              child: const Icon(Icons.stream_rounded, color: Color(0xFFE50914), size: 20),
+              child: const Icon(Icons.stream_rounded, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
             Text(
-              'VLC Network Stream',
+              'Custom Network Stream',
               style: AppFonts.sCoreDream(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
@@ -303,7 +304,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFE50914)),
+                  borderSide: const BorderSide(color: Colors.white),
                 ),
               ),
             ),
@@ -332,8 +333,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE50914),
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
@@ -550,7 +551,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2),
+                  const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   const SizedBox(height: 12),
                   Text(
                     'Buffering Live Stream...',
@@ -564,7 +565,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 36),
+                  const Icon(Icons.error_outline_rounded, color: Colors.white70, size: 36),
                   const SizedBox(height: 8),
                   Text(
                     'Live Stream Offline or Geo-Restricted',
@@ -578,8 +579,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE50914),
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     ),
                     icon: const Icon(Icons.refresh_rounded, size: 16),
@@ -607,13 +608,13 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE50914),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     _activeChannel.badge ?? 'LIVE',
                     style: AppFonts.sCoreDream(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
                     ),
@@ -677,8 +678,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                             trackHeight: 2.5,
                             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
                             overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
-                            thumbColor: const Color(0xFFE50914),
-                            activeTrackColor: const Color(0xFFE50914),
+                            thumbColor: Colors.white,
+                            activeTrackColor: Colors.white,
                             inactiveTrackColor: Colors.white24,
                           ),
                           child: Slider(
@@ -711,7 +712,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                                     width: 4,
                                     height: 4,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFE50914),
+                                      color: Colors.white,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -873,8 +874,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: const Color(0xFFE50914), borderRadius: BorderRadius.circular(4)),
-            child: Text('LIVE', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+            child: Text('LIVE', style: AppFonts.sCoreDream(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900)),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -921,8 +922,8 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 trackHeight: 3,
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
-                thumbColor: const Color(0xFFE50914),
-                activeTrackColor: const Color(0xFFE50914),
+                thumbColor: Colors.white,
+                activeTrackColor: Colors.white,
                 inactiveTrackColor: Colors.white24,
               ),
               child: Slider(
@@ -987,7 +988,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 const SizedBox(
                   width: 10,
                   height: 10,
-                  child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 1.5),
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5),
                 ),
               ],
             ],
@@ -1067,17 +1068,17 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isSel ? const Color(0xFFE50914).withValues(alpha: 0.25) : const Color(0xFF0F0F0F),
+                color: isSel ? Colors.white : const Color(0xFF0F0F0F),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: isSel ? const Color(0xFFE50914) : const Color(0xFF1E1E1E),
+                  color: isSel ? Colors.white : const Color(0xFF1E1E1E),
                 ),
               ),
               child: Center(
                 child: Text(
                   country == 'All' ? '🌐 ALL REGIONS' : '$flag $country',
                   style: AppFonts.sCoreDream(
-                    color: isSel ? const Color(0xFFE50914) : Colors.white70,
+                    color: isSel ? Colors.black : Colors.white70,
                     fontSize: 10,
                     fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -1140,7 +1141,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 _selectedCountry = 'All';
                 _searchQuery = '';
               }),
-              child: Text('Reset Filters', style: AppFonts.sCoreDream(color: const Color(0xFFE50914), fontSize: 11)),
+              child: Text('Reset Filters', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11)),
             ),
           ],
         ),
@@ -1165,7 +1166,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
               color: const Color(0xFF141414),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: isActive ? const Color(0xFFE50914) : const Color(0xFF222222),
+                color: isActive ? Colors.white : const Color(0xFF222222),
               ),
             ),
             child: ClipRRect(
@@ -1234,12 +1235,12 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE50914),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
                     'PLAYING',
-                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                    style: AppFonts.sCoreDream(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold),
                   ),
                 ),
             ],

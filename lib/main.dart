@@ -26,36 +26,46 @@ class PureCinemaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pure Cinema',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF050505),
-        primaryColor: Colors.white,
-        fontFamily: 'sCore Dream',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF050505),
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Color(0xFF050505),
-            statusBarBrightness: Brightness.dark,
-            statusBarIconBrightness: Brightness.light,
-          ),
-        ),
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.white,
-          secondary: Color(0xFFE4E4E7),
-          surface: Color(0xFF0C0C0C),
-          surfaceContainerLowest: Color(0xFF050505),
-        ),
-        textTheme: GoogleFonts.outfitTextTheme(
-          ThemeData.dark().textTheme,
-        ).apply(fontFamily: 'sCore Dream'),
-        useMaterial3: true,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF050505),
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF050505),
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
       ),
-      home: const SplashScreen(),
+      child: MaterialApp(
+        title: 'Pure Cinema',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF050505),
+          primaryColor: Colors.white,
+          fontFamily: 'sCore Dream',
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF050505),
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Color(0xFF050505),
+              statusBarBrightness: Brightness.dark,
+              statusBarIconBrightness: Brightness.light,
+            ),
+          ),
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            secondary: Color(0xFFE4E4E7),
+            surface: Color(0xFF0C0C0C),
+            surfaceContainerLowest: Color(0xFF050505),
+          ),
+          textTheme: GoogleFonts.outfitTextTheme(
+            ThemeData.dark().textTheme,
+          ).apply(fontFamily: 'sCore Dream'),
+          useMaterial3: true,
+        ),
+        home: const SplashScreen(),
+      ),
     );
   }
 }

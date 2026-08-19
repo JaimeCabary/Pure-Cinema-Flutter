@@ -6,11 +6,15 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="Pure Cinema - Uncompromised 4K Cinema Streaming, 10,000+ Worldwide Live TV, and AI CineBot Concierge.">
+  
+  <!-- Browser & Mobile Status Bar Color Meta Tags -->
   <meta name="theme-color" content="#050505">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#050505">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050505">
+  <meta name="msapplication-navbutton-color" content="#050505">
+  <meta name="msapplication-TileColor" content="#050505">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iOS Safari & Simulator Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pure Cinema">
@@ -39,6 +43,11 @@
     flutter-view, flt-glass-pane, flt-scene-host, canvas {
       background-color: #050505 !important;
       background: #050505 !important;
+    }
+    .status-bar, .device-header, .header-bar, [class*="statusbar"], [class*="status-bar"], [class*="topbar"], [class*="notch"], [class*="island"] {
+      background: #050505 !important;
+      background-color: #050505 !important;
+      color: #ffffff !important;
     }
     #splash-container {
       display: flex;

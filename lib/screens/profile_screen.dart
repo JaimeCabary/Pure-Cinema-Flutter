@@ -57,8 +57,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE50914),
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text('Sign Out', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
