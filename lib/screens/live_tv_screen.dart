@@ -632,19 +632,6 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 6),
-                // Fullscreen Button
-                GestureDetector(
-                  onTap: _toggleFullscreen,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Icon(Icons.fullscreen_rounded, color: Colors.white, size: 18),
-                  ),
-                ),
               ],
             ),
           ),
@@ -773,56 +760,29 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
                       ),
                       const Spacer(),
 
-                      // Collapse / Expand Toggle
-                      GestureDetector(
-                        onTap: () => setState(() => _isChannelListCollapsed = !_isChannelListCollapsed),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white12,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isChannelListCollapsed ? Icons.view_sidebar_rounded : Icons.crop_free_rounded,
-                                color: Colors.white70,
-                                size: 12,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _isChannelListCollapsed ? 'GUIDE' : 'EXPAND',
-                                style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
                       // Speed Selector
                       GestureDetector(
                         onTap: _cycleSpeed,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                           decoration: BoxDecoration(
                             color: Colors.white12,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             '${_playbackSpeed}x',
-                            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
 
-                      // Fullscreen Icon
+                      // Fullscreen Button
                       IconButton(
-                        iconSize: 18,
+                        iconSize: 20,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.fullscreen_rounded, color: Colors.white70),
+                        icon: Icon(_isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: Colors.white),
                         onPressed: _toggleFullscreen,
                       ),
                     ],

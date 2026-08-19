@@ -9,20 +9,23 @@ from app.services.tmdb_service import TMDBService
 logger = logging.getLogger("pure_cinema_agent")
 
 SYSTEM_INSTRUCTION = """
-You are Pure Cinema's AI CineBot - an intelligent, movie-savvy cinema concierge assistant inside the Pure Cinema streaming platform.
-Your goals:
-1. Help users discover movies, TV shows, and live content based on mood, genre, cast, director, or natural language prompts.
-2. Provide concise, enthusiastic, and insightful answers about films, directors, cinematography, and trivia.
-3. Suggest interactive app actions using JSON action flags when appropriate:
-   - OPEN_MOVIE: navigate directly to a movie watch screen. Payload: {"movieId": <id>, "title": "<title>"}
-   - SEARCH_MOVIE: search movies matching a query. Payload: {"query": "<query>"}
-   - NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
-   - ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
+You are Pure Cinema's AI CineBot — an ultra-knowledgeable, witty, and deeply conversational film concierge & cinema bestie.
+You are passionate about cinema: from Christopher Nolan mind-benders and Denis Villeneuve sci-fi spectacles to indie gems, anime, Korean thrillers, docuseries, and Hollywood classics.
 
-Keep responses friendly, elegant, cinematic, and concise. Format movie titles in bold. Do not use raw asterisks around whole paragraphs or robotic boilerplate.
+Your conversational style:
+- Talk naturally, warmly, and conversationally. Treat the user like a fellow film lover.
+- Engage in casual banter, answer movie trivia, debate fan theories, and match recommendations to specific moods (e.g. "I need a cozy rainy-day movie", "something like Interstellar", "best plot twists").
+- Keep formatting clean, stylish, and readable with Markdown. Format movie and TV show titles in bold.
+- Never respond with dry robotic boilerplate.
+
+When suggesting actionable items, include relevant app actions:
+- OPEN_MOVIE: navigate directly to a movie watch screen. Payload: {"movieId": <id>, "title": "<title>"}
+- SEARCH_MOVIE: search movies matching a query. Payload: {"query": "<query>"}
+- NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
+- ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
 """
 
-# Gemini Model Swarm Priority (Matching Latest Google AI Studio Releases)
+# Gemini Model Swarm Priority
 GEMINI_MODELS = [
     "gemini-3.7-flash",
     "gemini-3.6-flash",
@@ -40,18 +43,18 @@ class AgentService:
         actions: List[ActionCommand] = []
         suggested_prompts: List[str] = [
             "Recommend a mind-bending sci-fi movie",
-            "Show me top rated action movies",
-            "Go to Live TV",
+            "What should I watch if I love Inception?",
+            "Go to Live TV Channels",
             "Open my Watchlist",
             "Who directed Interstellar?"
         ]
 
-        # 1. Quick Navigation Intent Matching
+        # 1. Quick In-App Tab Navigation Intents
         if user_lower in ["watchlist", "my list", "open watchlist", "show watchlist"]:
             actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 3}))
             return AgentChatResponse(
                 success=True,
-                reply="🎬 Taking you straight to your **Watchlist**! Here you can find all your saved titles.",
+                reply="🎬 Taking you straight to your **Watchlist**! Here you can find all your saved cinema titles.",
                 actions=actions,
                 suggestedPrompts=["What should I watch next?", "Search sci-fi movies", "Go back to Home"]
             )
@@ -65,7 +68,7 @@ class AgentService:
                 suggestedPrompts=["Find news channels", "Recommend movies", "Go to Home"]
             )
 
-        # 2. Direct Google Gemini Call with Model Rotator Swarm
+        # 2. Live Google Gemini Rotator Swarm
         gemini_key = settings.GEMINI_API_KEY.strip()
         if gemini_key:
             contents = []
@@ -82,7 +85,7 @@ class AgentService:
                 "system_instruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
                 "contents": contents,
                 "generationConfig": {
-                    "temperature": 0.7,
+                    "temperature": 0.8,
                     "maxOutputTokens": 800,
                 }
             }
@@ -111,19 +114,19 @@ class AgentService:
                                         suggestedPrompts=suggested_prompts
                                     )
                         elif res.status_code == 403:
-                            logger.error(f"Gemini API Key reported as leaked/blocked (403): {res.text}")
+                            logger.error(f"Gemini API Key 403 Forbidden: {res.text}")
                             break
                         elif res.status_code == 429:
-                            logger.warning(f"Model {model} hit quota 429. Rotating to next model in swarm...")
+                            logger.warning(f"Model {model} hit rate limit (429). Rotating to next model...")
                             continue
                         else:
-                            logger.warning(f"Model {model} HTTP {res.status_code}. Rotating...")
+                            logger.warning(f"Model {model} returned HTTP {res.status_code}. Rotating...")
                             continue
                     except Exception as err:
-                        logger.warning(f"Error calling model {model}: {err}. Rotating...")
+                        logger.warning(f"Model {model} connection error: {err}. Rotating...")
                         continue
 
-        # 3. Dynamic TMDB Search Fallback if Gemini key is blocked or unset
+        # 3. Dynamic TMDB Search Fallback
         try:
             search_results = await TMDBService.search_movies(user_message)
             if search_results and len(search_results) > 0:
@@ -142,10 +145,10 @@ class AgentService:
         except Exception:
             pass
 
-        # 4. Fallback greeting
+        # 4. Natural Conversational Fallback
         return AgentChatResponse(
             success=True,
-            reply=f"🎬 I'm Pure Cinema AI CineBot! Ask me for movie recommendations, directors, cast trivia, or navigation.",
+            reply=f"🎬 Hey there! I'm your Pure Cinema concierge. Ask me for movie recommendations, explore directors and cast trivia, or tell me what mood you're in!",
             actions=[],
             suggestedPrompts=suggested_prompts
         )

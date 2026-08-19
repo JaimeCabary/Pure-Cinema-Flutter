@@ -4,32 +4,35 @@ import 'package:video_player/video_player.dart';
 import '../models/movie.dart';
 import '../models/cast_member.dart';
 import '../services/tmdb_service.dart';
+import '../services/database_service.dart';
 import '../screens/watch_screen.dart';
 import '../theme/fonts.dart';
 import 'movie_card.dart';
+import 'youtube_trailer_view.dart';
 
 class MovieDetailsModal extends StatefulWidget {
   final Movie movie;
   final bool isInWatchlist;
-  final VoidCallback onToggleWatchlist;
+  final VoidCallback? onToggleWatchlist;
 
   const MovieDetailsModal({
     super.key,
     required this.movie,
-    required this.isInWatchlist,
-    required this.onToggleWatchlist,
+    this.isInWatchlist = false,
+    this.onToggleWatchlist,
   });
 
-  static void show(BuildContext context, Movie movie, bool isInWatchlist, VoidCallback onToggleWatchlist) {
+  static void show(
+    BuildContext context,
+    Movie movie, [
+    bool isInWatchlist = false,
+    VoidCallback? onToggleWatchlist,
+  ]) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0C0C0C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0xFF222222), width: 1),
-      ),
       isScrollControlled: true,
-      builder: (ctx) => MovieDetailsModal(
+      backgroundColor: Colors.transparent,
+      builder: (_) => MovieDetailsModal(
         movie: movie,
         isInWatchlist: isInWatchlist,
         onToggleWatchlist: onToggleWatchlist,
@@ -45,7 +48,8 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   List<CastMember> _cast = [];
   List<Movie> _similar = [];
   bool _isLoadingDetails = true;
-  late bool _isInList;
+  bool _isInList = false;
+  String? _youtubeTrailerKey;
 
   // Trailer Controller (Unseeked, Expandable)
   VideoPlayerController? _trailerController;
@@ -105,12 +109,14 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
     final results = await Future.wait([
       TMDBService.fetchCredits(widget.movie.id),
       TMDBService.fetchSimilar(widget.movie.id),
+      TMDBService.fetchTrailerKey(widget.movie.id),
     ]);
 
     if (mounted) {
       setState(() {
         _cast = results[0] as List<CastMember>;
         _similar = results[1] as List<Movie>;
+        _youtubeTrailerKey = results[2] as String?;
         _isLoadingDetails = false;
       });
     }
@@ -333,35 +339,37 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         borderRadius: BorderRadius.circular(12),
                         child: AspectRatio(
                           aspectRatio: 16 / 9,
-                          child: Stack(
-                            children: [
-                              // Backdrop Image Placeholder
-                              Positioned.fill(
-                                child: CachedNetworkImage(
-                                  imageUrl: movie.backdropUrl,
-                                  fit: BoxFit.cover,
-                                  alignment: Alignment.topCenter,
-                                  errorWidget: (_, __, ___) => Container(color: Colors.black),
-                                ),
-                              ),
-
-                                // Autoplay Video Trailer Layer
-                                if (_trailerController != null && _trailerController!.value.isInitialized)
-                                  Positioned.fill(
-                                    child: VideoPlayer(_trailerController!),
-                                  )
-                                else
-                                  const Positioned.fill(
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                      ),
+                          child: _youtubeTrailerKey != null && _youtubeTrailerKey!.isNotEmpty
+                              ? YouTubeTrailerView(
+                                  trailerKey: _youtubeTrailerKey!,
+                                  backdropUrl: movie.backdropUrl,
+                                  title: movie.title,
+                                )
+                              : Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    CachedNetworkImage(
+                                      imageUrl: movie.backdropUrl,
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
+                                      errorWidget: (_, __, ___) => Container(color: Colors.black),
                                     ),
-                                  ),
-                            ],
-                          ),
+                                    if (_trailerController != null && _trailerController!.value.isInitialized)
+                                      Positioned.fill(
+                                        child: VideoPlayer(_trailerController!),
+                                      )
+                                    else
+                                      const Positioned.fill(
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                         ),
                       ),
 
@@ -605,7 +613,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                       const SizedBox(width: 12),
                       InkWell(
                         onTap: () {
-                          widget.onToggleWatchlist();
+                          widget.onToggleWatchlist?.call();
                           setState(() => _isInList = !_isInList);
                         },
                         borderRadius: BorderRadius.circular(6),
