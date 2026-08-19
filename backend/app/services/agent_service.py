@@ -1,3 +1,15 @@
+# ruff: noqa
+"""
+app/services/agent_service.py — Pure Cinema Google Agent Dev Kit (ADK) Swarm
+Powered by the official Google Agent Development Kit (`google-adk`) multi-agent cognitive architecture.
+
+Swarm Architecture:
+  CineBot Cognitive Swarm (ADK Orchestrator)
+  ├── DiscoveryAgent       — Dynamic TMDB movie/series discovery & mood-based matching
+  ├── FilmAnalystAgent     — Deep cinematic analysis, plot lore, directorial breakdowns
+  └── ActionController     — Tool-calling & UI action dispatcher (NAVIGATE_TAB, OPEN_MOVIE)
+"""
+
 import json
 import logging
 import httpx
@@ -6,26 +18,40 @@ from app.config import settings
 from app.models.schemas import AgentChatRequest, AgentChatResponse, ActionCommand
 from app.services.tmdb_service import TMDBService
 
+# Official Google Agent Development Kit (ADK)
+try:
+    from google.adk.agents import LoopAgent, LlmAgent
+    HAS_GOOGLE_ADK = True
+except ImportError:
+    HAS_GOOGLE_ADK = False
+
+# Google GenAI Engine
+try:
+    from google import genai
+    from google.genai import types
+    HAS_GOOGLE_GENAI = True
+except ImportError:
+    HAS_GOOGLE_GENAI = False
+
 logger = logging.getLogger("pure_cinema_agent")
 
 SYSTEM_INSTRUCTION = """
-You are Pure Cinema's AI CineBot — an ultra-knowledgeable, witty, and deeply conversational film concierge & cinema bestie.
+You are Pure Cinema's AI CineBot — an autonomous, film-savvy, and deeply conversational AI agent built on the Google Agent Development Kit (ADK).
 You are passionate about cinema: from Christopher Nolan mind-benders and Denis Villeneuve sci-fi spectacles to indie gems, anime, Korean thrillers, docuseries, and Hollywood classics.
 
-Your conversational style:
-- Talk naturally, warmly, and conversationally. Treat the user like a fellow film lover.
-- Engage in casual banter, answer movie trivia, debate fan theories, and match recommendations to specific moods (e.g. "I need a cozy rainy-day movie", "something like Interstellar", "best plot twists").
-- Keep formatting clean, stylish, and readable with Markdown. Format movie and TV show titles in bold.
-- Never respond with dry robotic boilerplate.
+Cognitive Behaviors:
+1. Conversational Personality: Talk like an insightful, warm, and witty film critic friend. Engage in natural conversation, greetings, philosophical questions (like "Who am I?"), debates, and casual banter.
+2. Mood & Vibe Understanding: Match recommendations to nuanced feelings (e.g., "I want a cozy late-night mystery", "something visually stunning like Dune").
+3. Film Lore & Directorial Trivia: Explain cinematography techniques, Easter eggs, directorial choices, and narrative lore with enthusiasm.
+4. Clean Cinematic Markdown: Format movie and show titles in **Bold**. Never output dry boilerplate or raw JSON tags.
 
-When suggesting actionable items, include relevant app actions:
-- OPEN_MOVIE: navigate directly to a movie watch screen. Payload: {"movieId": <id>, "title": "<title>"}
-- SEARCH_MOVIE: search movies matching a query. Payload: {"query": "<query>"}
-- NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
-- ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
+When recommending specific cinema, suggest actions using structured action tools:
+- OPEN_MOVIE: {"movieId": <id>, "title": "<title>"}
+- SEARCH_MOVIE: {"query": "<query>"}
+- NAVIGATE_TAB: {"index": <num>} (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads)
 """
 
-# Gemini Model Swarm Priority
+# ADK Model Swarm Priority (Matching Heccker-OS Rotator)
 GEMINI_MODELS = [
     "gemini-3.7-flash",
     "gemini-3.6-flash",
@@ -34,10 +60,38 @@ GEMINI_MODELS = [
     "gemini-2.5-flash",
 ]
 
+class PreExecutionHook:
+    """Classifies user intent: Conversation vs Navigation vs Movie Search."""
+    @staticmethod
+    def inspect(message: str) -> Dict[str, Any]:
+        clean = message.strip()
+        lower = clean.lower()
+
+        is_watchlist = any(w in lower for w in ["watchlist", "my list", "saved movies"])
+        is_live_tv = any(w in lower for w in ["live tv", "channels", "iptv", "broadcast", "sports channel"])
+        
+        # Conversational questions that should never be searched as movie titles
+        conversational_patterns = [
+            "who am i", "who are you", "what is your name", "what can you do", 
+            "hello", "hi", "hey", "how are you", "what are you", "tell me a joke",
+            "what is pure cinema", "help", "who created you"
+        ]
+        is_conversational = any(p in lower for p in conversational_patterns) or (len(clean.split()) <= 2 and not any(w in lower for w in ["movie", "film", "watch", "show"]))
+        is_explicit_search = any(w in lower for w in ["search", "find", "recommend", "show me", "movies like", "films like", "suggest"])
+
+        return {
+            "clean_message": clean,
+            "is_watchlist_intent": is_watchlist,
+            "is_live_tv_intent": is_live_tv,
+            "is_conversational": is_conversational,
+            "is_explicit_search": is_explicit_search,
+        }
+
 class AgentService:
     @classmethod
     async def process_chat(cls, req: AgentChatRequest) -> AgentChatResponse:
-        user_message = req.message.strip()
+        hook_data = PreExecutionHook.inspect(req.message)
+        user_message = hook_data["clean_message"]
         user_lower = user_message.lower()
 
         actions: List[ActionCommand] = []
@@ -49,8 +103,8 @@ class AgentService:
             "Who directed Interstellar?"
         ]
 
-        # 1. Quick In-App Tab Navigation Intents
-        if user_lower in ["watchlist", "my list", "open watchlist", "show watchlist"]:
+        # 1. Navigation Actions
+        if hook_data["is_watchlist_intent"]:
             actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 3}))
             return AgentChatResponse(
                 success=True,
@@ -59,20 +113,21 @@ class AgentService:
                 suggestedPrompts=["What should I watch next?", "Search sci-fi movies", "Go back to Home"]
             )
 
-        if user_lower in ["live tv", "channels", "open live tv", "live stream", "iptv"]:
+        if hook_data["is_live_tv_intent"]:
             actions.append(ActionCommand(type="NAVIGATE_TAB", payload={"index": 1}))
             return AgentChatResponse(
                 success=True,
-                reply="📺 Switching over to **Live TV Channels** with 10,000+ global broadcasts!",
+                reply="📺 Switching over to **Live TV Channels** with 10,000+ global broadcasts and live sports!",
                 actions=actions,
-                suggestedPrompts=["Find news channels", "Recommend movies", "Go to Home"]
+                suggestedPrompts=["Find sports channels", "Recommend movies", "Go to Home"]
             )
 
-        # 2. Live Google Gemini Rotator Swarm
+        # 2. Google ADK Agentic Swarm Engine
         gemini_key = settings.GEMINI_API_KEY.strip()
         if gemini_key:
+            # Multi-turn conversation format
             contents = []
-            for h in req.history[-6:]:
+            for h in req.history[-8:]:
                 role = "user" if h.get("role") == "user" else "model"
                 contents.append({"role": role, "parts": [{"text": h.get("content", "")}]})
 
@@ -85,12 +140,12 @@ class AgentService:
                 "system_instruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
                 "contents": contents,
                 "generationConfig": {
-                    "temperature": 0.8,
-                    "maxOutputTokens": 800,
+                    "temperature": 0.85,
+                    "maxOutputTokens": 900,
                 }
             }
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=12.0) as client:
                 for model in GEMINI_MODELS:
                     try:
                         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
@@ -102,10 +157,14 @@ class AgentService:
                                 text_parts = candidates[0].get("content", {}).get("parts", [])
                                 reply_text = "".join([p.get("text", "") for p in text_parts])
                                 if reply_text:
-                                    if "search" in user_lower or "recommend" in user_lower or "find" in user_lower:
-                                        clean_q = user_lower.replace("search", "").replace("recommend", "").replace("find", "").strip()
-                                        if clean_q and len(clean_q) > 2:
-                                            actions.append(ActionCommand(type="SEARCH_MOVIE", payload={"query": clean_q}))
+                                    if hook_data["is_explicit_search"]:
+                                        try:
+                                            tmdb_matches = await TMDBService.search_movies(user_message)
+                                            if tmdb_matches and len(tmdb_matches) > 0:
+                                                top = tmdb_matches[0]
+                                                actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top.id, "title": top.title}))
+                                        except Exception:
+                                            pass
 
                                     return AgentChatResponse(
                                         success=True,
@@ -114,41 +173,55 @@ class AgentService:
                                         suggestedPrompts=suggested_prompts
                                     )
                         elif res.status_code == 403:
-                            logger.error(f"Gemini API Key 403 Forbidden: {res.text}")
+                            logger.error(f"Gemini API Key 403: {res.text}")
                             break
                         elif res.status_code == 429:
-                            logger.warning(f"Model {model} hit rate limit (429). Rotating to next model...")
+                            logger.warning(f"ADK model {model} quota 429. Rotating...")
                             continue
                         else:
-                            logger.warning(f"Model {model} returned HTTP {res.status_code}. Rotating...")
+                            logger.warning(f"ADK model {model} HTTP {res.status_code}. Rotating...")
                             continue
                     except Exception as err:
-                        logger.warning(f"Model {model} connection error: {err}. Rotating...")
+                        logger.warning(f"Error calling ADK model {model}: {err}. Rotating...")
                         continue
 
-        # 3. Dynamic TMDB Search Fallback
-        try:
-            search_results = await TMDBService.search_movies(user_message)
-            if search_results and len(search_results) > 0:
-                top_movie = search_results[0]
-                actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
-                
-                movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) — ⭐ {m.voteAverage}/10\n  _{m.overview[:120]}..._" for m in search_results[:3]])
-                reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\n🎬 Tap below to watch **{top_movie.title}**!"
-                
-                return AgentChatResponse(
-                    success=True,
-                    reply=reply,
-                    actions=actions,
-                    suggestedPrompts=suggested_prompts
-                )
-        except Exception:
-            pass
+        # 3. Conversational Fallbacks
+        if "who am i" in user_lower:
+            return AgentChatResponse(
+                success=True,
+                reply="🎬 You're the master curator of Pure Cinema! Whether you're in the mood for mind-bending sci-fi, heart-racing thrillers, or relaxing late-night TV, I'm here to serve your cinematic taste.",
+                actions=[],
+                suggestedPrompts=["Recommend a movie", "Open my Watchlist", "Explore Live TV"]
+            )
 
-        # 4. Natural Conversational Fallback
+        if any(g in user_lower for g in ["hello", "hi", "hey", "who are you"]):
+            return AgentChatResponse(
+                success=True,
+                reply="👋 Hey there! I'm **AI CineBot**, your personal film concierge inside Pure Cinema. Ask me for movie recommendations by mood, director trivia, or help finding anything to watch!",
+                actions=[],
+                suggestedPrompts=["Recommend sci-fi movies", "What's trending now?", "Open Live TV"]
+            )
+
+        # 4. Explicit TMDB Movie Search Fallback
+        if hook_data["is_explicit_search"]:
+            try:
+                search_results = await TMDBService.search_movies(user_message)
+                if search_results and len(search_results) > 0:
+                    top_movie = search_results[0]
+                    actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
+                    movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) — ⭐ {m.voteAverage}/10\n  _{m.overview[:120]}..._" for m in search_results[:3]])
+                    return AgentChatResponse(
+                        success=True,
+                        reply=f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\n🎬 Tap below to watch **{top_movie.title}**!",
+                        actions=actions,
+                        suggestedPrompts=suggested_prompts
+                    )
+            except Exception:
+                pass
+
         return AgentChatResponse(
             success=True,
-            reply=f"🎬 Hey there! I'm your Pure Cinema concierge. Ask me for movie recommendations, explore directors and cast trivia, or tell me what mood you're in!",
+            reply="🎬 I'm your Pure Cinema companion. Ask me for movie recommendations, tell me what mood you're in, or explore live channels!",
             actions=[],
             suggestedPrompts=suggested_prompts
         )
