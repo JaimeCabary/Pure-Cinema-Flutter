@@ -54,12 +54,12 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   bool _isPlaying = true;
   bool _isExpanded = false;
 
-  // High-def sample cinematic preview streams
+  // High-performance lightweight fast-start cinematic preview streams (< 3MB)
   static final List<String> _sampleTrailers = [
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-futuristic-city-and-space-station-with-stars-32986-large.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-set-of-plateaus-seen-from-the-sky-in-a-sunset-26070-large.mp4',
+    'https://vjs.zencdn.net/v/oceans.mp4',
+    'https://assets.mixkit.co/videos/preview/mixkit-sun-setting-over-the-ocean-1181-large.mp4',
   ];
 
   @override
@@ -86,8 +86,7 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
 
       await _trailerController!.initialize();
       await _trailerController!.setLooping(true);
-      await _trailerController!.setVolume(0.0); // Muted for browser autoplay compliance
-      await _trailerController!.play();
+      await _trailerController!.setVolume(0.0); // Muted for instant browser autoplay compliance
 
       if (mounted) {
         setState(() {
@@ -95,6 +94,8 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
           _isPlaying = true;
         });
       }
+
+      _trailerController!.play().catchError((_) {});
     } catch (e) {
       debugPrint('Trailer autoplay error: $e');
     }
