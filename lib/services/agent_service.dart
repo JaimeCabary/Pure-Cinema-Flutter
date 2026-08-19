@@ -17,7 +17,7 @@ class AgentChatMessage {
 
 class AgentService {
   static const String _productionUrl = 'https://pure-cinema-backend.onrender.com';
-  static const String _fallbackGeminiKey = 'AIzaSyCAx6iZnoYi7E3yvOQ9t-rVmkxYKFbEfyo';
+  static const String _fallbackGeminiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
   // Gemini model priority matching the new standout models
   static const List<String> _geminiModels = [
