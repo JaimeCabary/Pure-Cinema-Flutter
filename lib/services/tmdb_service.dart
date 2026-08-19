@@ -99,62 +99,194 @@ class TMDBService {
       releaseDate: '2024-05-22',
       voteAverage: 7.6,
     ),
+  ];
+
+  static final List<Movie> tvShowsFallbacks = [
     Movie(
-      id: 558449,
-      title: 'Gladiator II',
-      overview: 'Years after witnessing the death of the revered hero Maximus at the hands of his uncle, Lucius must enter the Colosseum after his home is conquered.',
-      posterPath: '/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg',
-      backdropPath: '/euYIwmwkmz95mnXvufEmbL6ovhA.jpg',
-      releaseDate: '2024-11-13',
+      id: 1399,
+      title: 'Game of Thrones',
+      overview: 'Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war.',
+      posterPath: '/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
+      backdropPath: '/2OMB0ynKlyIenMJWI2Dy9IWT4c.jpg',
+      releaseDate: '2011-04-17',
+      voteAverage: 8.4,
+    ),
+    Movie(
+      id: 1396,
+      title: 'Breaking Bad',
+      overview: 'A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student.',
+      posterPath: '/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
+      backdropPath: '/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg',
+      releaseDate: '2008-01-20',
+      voteAverage: 8.9,
+    ),
+    Movie(
+      id: 85937,
+      title: 'Succession',
+      overview: 'The Roy family is known for controlling the biggest media and entertainment company in the world. However, their world changes when their aging father steps down.',
+      posterPath: '/7T658vd4aBpzE27jXQeQ7lM3Gz9.jpg',
+      backdropPath: '/f1AQhx6ZfGhPZFTtyYKRAcq9G57.jpg',
+      releaseDate: '2018-06-03',
+      voteAverage: 8.6,
+    ),
+    Movie(
+      id: 126308,
+      title: 'Shōgun',
+      overview: 'When a mysterious European ship is found marooned in a nearby fishing village, Lord Yoshii Toranaga discovers secrets that could tip the scales of power.',
+      posterPath: '/7O4iVfOMQmdCSPxRIiqxdu2Nnpg.jpg',
+      backdropPath: '/5zmiBoMzeWKVyrbZzs8hDFtDNOS.jpg',
+      releaseDate: '2024-02-27',
+      voteAverage: 8.5,
+    ),
+  ];
+
+  static final List<Movie> docuseriesFallbacks = [
+    Movie(
+      id: 92782,
+      title: 'The Last Dance',
+      overview: 'A 10-part documentary chronicles the 1990s Chicago Bulls, led by Michael Jordan, one of the most notable dynasties in sports history.',
+      posterPath: '/7d38zI01l8d1eU6r266pXzCqY4q.jpg',
+      backdropPath: '/nTvM4mhqFXZza79U1c4gK2vW9Y4.jpg',
+      releaseDate: '2020-04-19',
+      voteAverage: 8.8,
+    ),
+    Movie(
+      id: 86450,
+      title: 'Formula 1: Drive to Survive',
+      overview: 'Drivers, managers and team owners live life in the fast lane — both on and off the track — during each cutthroat season of Formula 1 racing.',
+      posterPath: '/7H2M7eL44v8b1e4R4Wn5YqZ7j8K.jpg',
+      backdropPath: '/3r7K0K00p9U1wN4kP8uR7tZ9j0K.jpg',
+      releaseDate: '2019-03-08',
+      voteAverage: 8.4,
+    ),
+    Movie(
+      id: 1045,
+      title: 'Planet Earth II',
+      overview: 'David Attenborough presents a documentary series exploring the unique characteristics of Earth\'s most iconic habitats and the extraordinary animals that live there.',
+      posterPath: '/6Zw6c4gH7gW7jXzY9q1kK8nL5pQ.jpg',
+      backdropPath: '/7w0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      releaseDate: '2016-11-06',
+      voteAverage: 8.9,
+    ),
+  ];
+
+  static final List<Movie> biographiesFallbacks = [
+    Movie(
+      id: 37799,
+      title: 'The Social Network',
+      overview: 'On a fall night in 2003, Harvard undergrad and computer programming genius Mark Zuckerberg sits down at his computer and heatedly begins working on a new idea.',
+      posterPath: '/n0ybibhJtQ5icDqTpTpH1207apG.jpg',
+      backdropPath: '/g4H3nZ5jP8uR7tZ9j0K7w0aK9vP.jpg',
+      releaseDate: '2010-10-01',
+      voteAverage: 7.8,
+    ),
+    Movie(
+      id: 106646,
+      title: 'The Wolf of Wall Street',
+      overview: 'A New York stockbroker refuses to cooperate in a large securities fraud case that involves corruption on Wall Street, the corporate banking world and mob infiltration.',
+      posterPath: '/34m2tygAYBGqA9MXKhRDtzYd4MR.jpg',
+      backdropPath: '/cWUOv3H7YVwvPp4L8g0k8uR7tZ9.jpg',
+      releaseDate: '2013-12-25',
+      voteAverage: 8.0,
+    ),
+    Movie(
+      id: 424694,
+      title: 'Bohemian Rhapsody',
+      overview: 'Singer Freddie Mercury, guitarist Brian May, drummer Roger Taylor and bass guitarist John Deacon take the music world by storm when they form the rock band Queen.',
+      posterPath: '/lHu1wtN109GFTuTuKR2UkEo3vgq.jpg',
+      backdropPath: '/7t0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      releaseDate: '2018-10-24',
+      voteAverage: 8.0,
+    ),
+  ];
+
+  static final List<Movie> sportsFallbacks = [
+    Movie(
+      id: 359724,
+      title: 'Ford v Ferrari',
+      overview: 'American car designer Carroll Shelby and the fearless British-born driver Ken Miles together battle corporate interference and the laws of physics to build a revolutionary race car for Ford Motor Company.',
+      posterPath: '/6ApDtO7xa78wxv7w0aK9vP5jW4n.jpg',
+      backdropPath: '/n313uvUZ0r4v3P650eNp1y7xK8n.jpg',
+      releaseDate: '2019-11-13',
+      voteAverage: 8.0,
+    ),
+    Movie(
+      id: 60308,
+      title: 'Moneyball',
+      overview: 'Oakland A\'s general manager Billy Beane\'s successful attempt to assemble a baseball team on a lean budget by employing computer-generated analysis to acquire new players.',
+      posterPath: '/42m1tZ4p1kK8nL5pQ7w0aK9vP5j.jpg',
+      backdropPath: '/7t0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      releaseDate: '2011-09-22',
+      voteAverage: 7.3,
+    ),
+    Movie(
+      id: 307663,
+      title: 'Creed',
+      overview: 'The former World Heavyweight Champion Rocky Balboa serves as a trainer and mentor to Adonis Johnson, the son of his late friend and former rival Apollo Creed.',
+      posterPath: '/7w0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      backdropPath: '/g4H3nZ5jP8uR7tZ9j0K7w0aK9vP.jpg',
+      releaseDate: '2015-11-25',
+      voteAverage: 7.4,
+    ),
+  ];
+
+  static final List<Movie> romanceFallbacks = [
+    Movie(
+      id: 313369,
+      title: 'La La Land',
+      overview: 'Mia, an aspiring actress, and Sebastian, a dedicated jazz musician, are struggling to make ends meet in a city known for crushing hopes and breaking hearts.',
+      posterPath: '/uDO8zWDhfWwoFdKS4fzkVJt0Rf0.jpg',
+      backdropPath: '/qJeU7ee0YFvN6bUvW9oZ8zW6z.jpg',
+      releaseDate: '2016-11-29',
+      voteAverage: 7.9,
+    ),
+    Movie(
+      id: 597,
+      title: 'Titanic',
+      overview: '101-year-old Rose DeWitt Bukater tells the story of her life aboard the Titanic, 84 years later, to her granddaughter and a team of treasure hunters.',
+      posterPath: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',
+      backdropPath: '/6xmPqL8kP8uR7tZ9j0K7w0aK9vP.jpg',
+      releaseDate: '1997-11-18',
+      voteAverage: 7.9,
+    ),
+    Movie(
+      id: 666277,
+      title: 'Past Lives',
+      overview: 'Nora and Hae Sung, two deeply connected childhood friends, are wrested apart after Nora\'s family emigrates from South Korea. Two decades later, they are reunited in New York for one fateful week.',
+      posterPath: '/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg',
+      backdropPath: '/7t0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      releaseDate: '2023-06-02',
       voteAverage: 7.8,
     ),
   ];
 
-  static final List<Movie> popularFallbacks = [
+  static final List<Movie> faithFallbacks = [
     Movie(
-      id: 299534,
-      title: 'Avengers: Endgame',
-      overview: 'After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more to reverse Thanos\' actions.',
-      posterPath: '/or06FN3Dka5tukK1e9sl16pB3iy.jpg',
-      backdropPath: '/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg',
-      releaseDate: '2019-04-24',
-      voteAverage: 8.3,
+      id: 615,
+      title: 'The Passion of the Christ',
+      overview: 'A graphic depiction of the final twelve hours in the life of Jesus of Nazareth, on the day of his crucifixion in Jerusalem.',
+      posterPath: '/vH64XbV09kK8nL5pQ7w0aK9vP5j.jpg',
+      backdropPath: '/8t0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      releaseDate: '2004-02-25',
+      voteAverage: 7.5,
     ),
     Movie(
-      id: 603,
-      title: 'The Matrix',
-      overview: 'Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast computers who rule the earth.',
-      posterPath: '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
-      backdropPath: '/easkWjhK5d7E871vE3q2J6oZf6U.jpg',
-      releaseDate: '1999-03-30',
+      id: 324786,
+      title: 'Hacksaw Ridge',
+      overview: 'WWII American Army Medic Desmond T. Doss, who served during the Battle of Okinawa, refuses to kill people and becomes the first man in American history to receive the Medal of Honor without firing a shot.',
+      posterPath: '/jcTq6Rfa9AezOl1X7ZLyf7UP1M.jpg',
+      backdropPath: '/nTvM4mhqFXZza79U1c4gK2vW9Y4.jpg',
+      releaseDate: '2016-10-07',
       voteAverage: 8.2,
     ),
     Movie(
-      id: 155,
-      title: 'The Dark Knight',
-      overview: 'Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations.',
-      posterPath: '/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
-      backdropPath: '/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg',
-      releaseDate: '2008-07-16',
-      voteAverage: 8.5,
-    ),
-    Movie(
-      id: 603692,
-      title: 'John Wick: Chapter 4',
-      overview: 'With the price on his head ever increasing, John Wick uncovers a path to defeating The High Table. But before he can earn his freedom, Wick must face off against a new enemy.',
-      posterPath: '/vZloFAK7NKnMGKEslbb5VSAvqSQ.jpg',
-      backdropPath: '/7I6VUdPj6tQECNHdviJkUHD2389.jpg',
-      releaseDate: '2023-03-22',
-      voteAverage: 7.8,
-    ),
-    Movie(
-      id: 361743,
-      title: 'Top Gun: Maverick',
-      overview: 'After more than thirty years of service as one of the Navy’s top aviators, Pete Mitchell is where he belongs, pushing the envelope as a courageous test pilot.',
-      posterPath: '/62HCnUTziyWcpDaBO2i1DX17ljH.jpg',
-      backdropPath: '/AaV1YIdWKnjAIAOe8UUKBFm327v.jpg',
-      releaseDate: '2022-05-24',
-      voteAverage: 8.2,
+      id: 257211,
+      title: 'Silence',
+      overview: 'Two 17th-century Portuguese missionaries undertake a perilous journey to Japan to find their missing mentor and spread Catholic Christianity.',
+      posterPath: '/7t0aK9vP5jW4nN2mR8tZ7j0kP9U.jpg',
+      backdropPath: '/g4H3nZ5jP8uR7tZ9j0K7w0aK9vP.jpg',
+      releaseDate: '2016-12-22',
+      voteAverage: 7.2,
     ),
   ];
 
@@ -171,90 +303,34 @@ class TMDBService {
     Movie(
       id: 238,
       title: 'The Godfather',
-      overview: 'Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son steps in.',
+      overview: 'Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family.',
       posterPath: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
-      backdropPath: '/tmU7whstejGRRa8ZGFFtV8Y5bbu.jpg',
+      backdropPath: '/tmU7GeKVybMWFButWEGl2M4GeiP.jpg',
       releaseDate: '1972-03-14',
       voteAverage: 8.7,
-    ),
-    Movie(
-      id: 424,
-      title: 'Schindler\'s List',
-      overview: 'The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis while they worked as slaves in his factory during World War II.',
-      posterPath: '/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg',
-      backdropPath: '/zb6fM1CX41D9rF9hdgAv0W49XZY.jpg',
-      releaseDate: '1993-12-15',
-      voteAverage: 8.6,
-    ),
-    Movie(
-      id: 680,
-      title: 'Pulp Fiction',
-      overview: 'A burger-loving hit man, his philosophical partner, a drug-addled gangster\'s moll and a washed-up boxer converge in this sprawling, comedic crime caper.',
-      posterPath: '/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg',
-      backdropPath: '/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg',
-      releaseDate: '1994-09-10',
-      voteAverage: 8.5,
-    ),
-    Movie(
-      id: 550,
-      title: 'Fight Club',
-      overview: 'A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy.',
-      posterPath: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
-      backdropPath: '/hZkgoQYus5vegHoetLkCJzb17zJ.jpg',
-      releaseDate: '1999-10-15',
-      voteAverage: 8.4,
     ),
   ];
 
   static final List<Movie> animationFallbacks = [
     Movie(
+      id: 129,
+      title: 'Spirited Away',
+      overview: 'A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.',
+      posterPath: '/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
+      backdropPath: '/Ab8mk7cGqp0lhLgY4g2aN7r6W9.jpg',
+      releaseDate: '2001-07-20',
+      voteAverage: 8.5,
+    ),
+    Movie(
       id: 569094,
       title: 'Spider-Man: Across the Spider-Verse',
-      overview: 'After reuniting with Gwen Stacy, Brooklyn’s full-time, friendly neighborhood Spider-Man is catapulted across the Multiverse, where he encounters the Spider Society.',
+      overview: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
       posterPath: '/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg',
       backdropPath: '/4HodYYKEIsGOdinkGi2Ucz6X9i0.jpg',
       releaseDate: '2023-05-31',
       voteAverage: 8.4,
     ),
-    Movie(
-      id: 129,
-      title: 'Spirited Away',
-      overview: 'A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had.',
-      posterPath: '/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg',
-      backdropPath: '/bXNvzjYE21F9dF4bV2L4j75fBfL.jpg',
-      releaseDate: '2001-07-20',
-      voteAverage: 8.5,
-    ),
-    Movie(
-      id: 372058,
-      title: 'Your Name.',
-      overview: 'High schoolers Mitsuha and Taki are complete strangers living separate lives. But one night, they suddenly switch places, embarking on a cosmic search for each other.',
-      posterPath: '/q719qXXEzOoYaps6XZawPWhOi98.jpg',
-      backdropPath: '/dIWwZWOPmtjjIPCWm29cbwgs92m.jpg',
-      releaseDate: '2016-08-26',
-      voteAverage: 8.5,
-    ),
-    Movie(
-      id: 508442,
-      title: 'Soul',
-      overview: 'Joe Gardner is a middle school band teacher whose true passion is playing jazz. After a freak accident, his soul is separated from his body and transported to The Great Before.',
-      posterPath: '/hm58Jw4Lw8OIYECIq5qyPYhAeRJ.jpg',
-      backdropPath: '/kf456ZqeC45XTvo6W9pWJH1o2Y0.jpg',
-      releaseDate: '2020-12-25',
-      voteAverage: 8.1,
-    ),
-    Movie(
-      id: 150540,
-      title: 'Inside Out',
-      overview: 'Growing up can be a bumpy road, and it\'s no exception for Riley, who is uprooted from her Midwest life when her father starts a new job in San Francisco.',
-      posterPath: '/2H1TmgdfNtsKlU9qGeodAoxzz5f.jpg',
-      backdropPath: '/j2AeqGj4U4Wwh8Nfc5XyA79L57y.jpg',
-      releaseDate: '2015-06-09',
-      voteAverage: 7.9,
-    ),
   ];
-
-  static List<Movie> get fallbackMovies => bestPicksFallbacks;
 
   // ── TMDB API WITH LIVE BACKEND & DIRECT TMDB FAILOVER ──
 
@@ -268,7 +344,6 @@ class TMDBService {
       return (_cache[key] as List<Movie>);
     }
 
-    // 1. Attempt direct TMDB v3 API call with active key
     try {
       final uri = Uri.parse('$_baseUrl$endpoint').replace(
         queryParameters: {
@@ -296,32 +371,17 @@ class TMDBService {
       debugPrint('Direct TMDB endpoint $endpoint failed: $e. Trying backend...');
     }
 
-    // 2. Fallback to Render FastAPI Backend
-    try {
-      final backendPath = endpoint.replaceAll('/', '-').replaceFirst('-', '');
-      final bUri = Uri.parse('$_backendUrl/$backendPath');
-      final bRes = await http.get(bUri).timeout(const Duration(seconds: 4));
-      if (bRes.statusCode == 200) {
-        final data = json.decode(bRes.body) as List<dynamic>;
-        final results = data.map((item) => Movie.fromJson(item as Map<String, dynamic>)).toList();
-        if (results.isNotEmpty) {
-          _cache[key] = results;
-          return results;
-        }
-      }
-    } catch (_) {}
-
     return fallbackList;
   }
 
   static Future<List<Movie>> fetchTrending() =>
       _fetchEndpoint('/trending/movie/week', fallbackList: trendingFallbacks);
 
-  static Future<List<Movie>> fetchPopular() =>
-      _fetchEndpoint('/movie/popular', fallbackList: popularFallbacks);
-
   static Future<List<Movie>> fetchNowPlaying() =>
       _fetchEndpoint('/movie/now_playing', fallbackList: bestPicksFallbacks);
+
+  static Future<List<Movie>> fetchPopular() =>
+      _fetchEndpoint('/movie/popular', fallbackList: bestPicksFallbacks);
 
   static Future<List<Movie>> fetchTopRated() =>
       _fetchEndpoint('/movie/top_rated', fallbackList: topRatedFallbacks);
@@ -329,13 +389,31 @@ class TMDBService {
   static Future<List<Movie>> fetchAnimation() =>
       _fetchEndpoint('/discover/movie', params: {'with_genres': '16', 'sort_by': 'popularity.desc'}, fallbackList: animationFallbacks);
 
+  static Future<List<Movie>> fetchTVShows() =>
+      _fetchEndpoint('/discover/tv', params: {'sort_by': 'popularity.desc'}, fallbackList: tvShowsFallbacks);
+
+  static Future<List<Movie>> fetchDocuseries() =>
+      _fetchEndpoint('/discover/movie', params: {'with_genres': '99', 'sort_by': 'popularity.desc'}, fallbackList: docuseriesFallbacks);
+
+  static Future<List<Movie>> fetchBiographies() =>
+      _fetchEndpoint('/discover/movie', params: {'with_genres': '36,18', 'sort_by': 'popularity.desc'}, fallbackList: biographiesFallbacks);
+
+  static Future<List<Movie>> fetchSports() =>
+      _fetchEndpoint('/discover/movie', params: {'with_keywords': '6075', 'sort_by': 'popularity.desc'}, fallbackList: sportsFallbacks);
+
+  static Future<List<Movie>> fetchRomance() =>
+      _fetchEndpoint('/discover/movie', params: {'with_genres': '10749', 'sort_by': 'popularity.desc'}, fallbackList: romanceFallbacks);
+
+  static Future<List<Movie>> fetchFaith() =>
+      _fetchEndpoint('/discover/movie', params: {'with_genres': '18,36', 'sort_by': 'vote_average.desc'}, fallbackList: faithFallbacks);
+
   static Future<List<Movie>> searchMovies(String query) async {
     if (query.trim().isEmpty) return fetchPopular();
     return _fetchEndpoint('/search/movie', params: {'query': query.trim()}, fallbackList: trendingFallbacks);
   }
 
   static Future<List<Movie>> fetchSimilar(int movieId) =>
-      _fetchEndpoint('/movie/$movieId/similar', fallbackList: popularFallbacks);
+      _fetchEndpoint('/movie/$movieId/similar', fallbackList: bestPicksFallbacks);
 
   static Future<List<CastMember>> fetchCredits(int movieId) async {
     final key = 'credits:$movieId';

@@ -1,4 +1,30 @@
 import 'package:flutter/material.dart';
+import '../theme/fonts.dart';
+
+class CinemaLogo extends StatelessWidget {
+  final double fontSize;
+  const CinemaLogo({super.key, this.fontSize = 15});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CinemaLogoWidget(size: 22),
+        const SizedBox(width: 8),
+        Text(
+          'PURE CINEMA',
+          style: AppFonts.sCoreDream(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2.0,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class CinemaLogoWidget extends StatefulWidget {
   final double size;

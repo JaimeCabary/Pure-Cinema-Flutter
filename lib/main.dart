@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'services/auth_service.dart';
+import 'screens/main_nav_screen.dart';
+import 'screens/onboarding_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Enforce deep OLED black status bar and navigation bar with crisp white icons
@@ -17,12 +20,22 @@ void main() {
       systemNavigationBarDividerColor: Colors.transparent,
     ),
   );
+
+  final user = await AuthService.getCurrentUser();
+  final prefs = await SharedPreferences.getInstance();
+  final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
+
+  // Seamless instant entry: Go straight to MainNav or Onboarding (No double splash)
+  final Widget initialScreen = (user != null || hasCompletedOnboarding)
+      ? const MainNavScreen()
+      : const OnboardingScreen();
   
-  runApp(const PureCinemaApp());
+  runApp(PureCinemaApp(initialScreen: initialScreen));
 }
 
 class PureCinemaApp extends StatelessWidget {
-  const PureCinemaApp({super.key});
+  final Widget initialScreen;
+  const PureCinemaApp({super.key, required this.initialScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +77,7 @@ class PureCinemaApp extends StatelessWidget {
           ).apply(fontFamily: 'sCore Dream'),
           useMaterial3: true,
         ),
-        home: const SplashScreen(),
+        home: initialScreen,
       ),
     );
   }

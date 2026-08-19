@@ -4,10 +4,12 @@ import '../models/movie.dart';
 import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
 import '../widgets/movie_card.dart';
+import '../theme/fonts.dart';
 import 'watch_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final String? initialQuery;
+  const SearchScreen({super.key, this.initialQuery});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -22,8 +24,18 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _performSearch('');
+    final initQ = widget.initialQuery ?? '';
+    if (initQ.isNotEmpty) {
+      _searchController.text = initQ;
+    }
+    _performSearch(initQ);
     _loadWatchlist();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadWatchlist() async {
@@ -65,53 +77,86 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Search Field
+            // Top App Bar / Search Field
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF141414),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF242424)),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
-                  onChanged: (val) => _performSearch(val),
-                  decoration: InputDecoration(
-                    hintText: 'Search movies, genres, 4K titles...',
-                    hintStyle: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white38, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              _performSearch('');
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+              child: Row(
+                children: [
+                  if (Navigator.of(context).canPop()) ...[
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF141418),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF27272A)),
+                        ),
+                        child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ],
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141418),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF27272A)),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                        onChanged: (val) => _performSearch(val),
+                        decoration: InputDecoration(
+                          hintText: 'Search movies, TV shows, genres...',
+                          hintStyle: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, color: Colors.white38, size: 16),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _performSearch('');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
 
-            // Section Label
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: Text(
-                _searchController.text.isEmpty ? 'Top Searches' : 'Search Results',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+            // Category tag indicator
+            if (_searchController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: Row(
+                  children: [
+                    Text(
+                      'CATEGORY: ',
+                      style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _searchController.text.toUpperCase(),
+                        style: AppFonts.sCoreDream(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            // Grid Results with Hover Details
+            // Results Grid
             Expanded(
               child: _isLoading
                   ? const Center(
@@ -119,35 +164,40 @@ class _SearchScreenState extends State<SearchScreen> {
                     )
                   : _results.isEmpty
                       ? Center(
-                          child: Text(
-                            'No movies found.',
-                            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.movie_filter_outlined, color: Colors.white24, size: 48),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No titles found',
+                                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 14),
+                              ),
+                            ],
                           ),
                         )
                       : GridView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            childAspectRatio: 2 / 3,
+                            childAspectRatio: 0.65,
                             crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
+                            mainAxisSpacing: 12,
                           ),
                           itemCount: _results.length,
-                          itemBuilder: (ctx, index) {
+                          itemBuilder: (context, index) {
                             final movie = _results[index];
                             final isInList = _watchlist.contains(movie.id);
                             return MovieCard(
                               movie: movie,
                               isInWatchlist: isInList,
                               onTap: () {
-                                Navigator.push(
-                                  context,
+                                Navigator.of(context).push(
                                   MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
                                 );
                               },
                               onPlay: () {
-                                Navigator.push(
-                                  context,
+                                Navigator.of(context).push(
                                   MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
                                 );
                               },

@@ -71,24 +71,32 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   }
 
   Future<void> _initTrailerPlayer() async {
-    // Select sample trailer stream deterministically by movie ID
     final trailerIndex = widget.movie.id.abs() % _sampleTrailers.length;
     final streamUrl = _sampleTrailers[trailerIndex];
 
     try {
-      _trailerController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+      _trailerController = VideoPlayerController.networkUrl(
+        Uri.parse(streamUrl),
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+      
+      _trailerController!.addListener(() {
+        if (mounted) setState(() {});
+      });
+
       await _trailerController!.initialize();
-      _trailerController!.setLooping(true);
-      _trailerController!.setVolume(0.0); // Start muted for instant autoplay
+      await _trailerController!.setLooping(true);
+      await _trailerController!.setVolume(0.0); // Muted for browser autoplay compliance
       await _trailerController!.play();
+
       if (mounted) {
         setState(() {
           _isTrailerReady = true;
           _isPlaying = true;
         });
       }
-    } catch (_) {
-      // Fallback cleanly to backdrop image if video stream fails
+    } catch (e) {
+      debugPrint('Trailer autoplay error: $e');
     }
   }
 
@@ -336,36 +344,38 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                                 ),
                               ),
 
-                              // Autoplay Video Trailer Layer (Unseeked continuous teaser)
-                              if (_isTrailerReady && _trailerController != null)
-                                Positioned.fill(
-                                  child: AnimatedOpacity(
-                                    opacity: _isTrailerReady ? 1.0 : 0.0,
-                                    duration: const Duration(milliseconds: 500),
-                                    child: FittedBox(
-                                      fit: BoxFit.cover,
+                                // Autoplay Video Trailer Layer
+                                if (_trailerController != null && _trailerController!.value.isInitialized)
+                                  Positioned.fill(
+                                    child: VideoPlayer(_trailerController!),
+                                  )
+                                else
+                                  const Positioned.fill(
+                                    child: Center(
                                       child: SizedBox(
-                                        width: _trailerController!.value.size.width,
-                                        height: _trailerController!.value.size.height,
-                                        child: VideoPlayer(_trailerController!),
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                       ),
                                     ),
                                   ),
-                                ),
                             ],
                           ),
                         ),
                       ),
 
-                      // Gradient overlay
-                      Positioned.fill(
+                      // Subtle bottom gradient vignette
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 40,
                         child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: const LinearGradient(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
                               begin: Alignment.bottomCenter,
-                              end: Alignment.center,
-                              colors: [Colors.black87, Colors.transparent],
+                              end: Alignment.topCenter,
+                              colors: [Colors.black54, Colors.transparent],
                             ),
                           ),
                         ),

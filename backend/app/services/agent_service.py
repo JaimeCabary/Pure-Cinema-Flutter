@@ -19,11 +19,13 @@ Your goals:
    - NAVIGATE_TAB: switch app tab (0: Home, 1: Live TV, 2: Search, 3: Watchlist, 4: Downloads). Payload: {"index": <num>}
    - ADD_WATCHLIST: add movie to user watchlist. Payload: {"movieId": <id>}
 
-Keep responses friendly, elegant, cinematic, and concise. Format movie titles in bold.
+Keep responses friendly, elegant, cinematic, and concise. Format movie titles in bold. Do not use raw asterisks around whole paragraphs or robotic boilerplate.
 """
 
-# Free-tier model rotation priority list
-FREE_TIER_MODELS = [
+# Gemini Model Rotator Priority List (Matching Heccker-OS Architecture)
+GEMINI_MODELS = [
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
     "gemini-1.5-flash",
@@ -68,7 +70,6 @@ class AgentService:
         # 2. Direct Google Gemini Call with Model Rotator
         gemini_key = settings.GEMINI_API_KEY.strip()
         if gemini_key:
-            # Build conversation history
             contents = []
             for h in req.history[-6:]:
                 role = "user" if h.get("role") == "user" else "model"
@@ -88,8 +89,8 @@ class AgentService:
                 }
             }
 
-            async with httpx.AsyncClient(timeout=12.0) as client:
-                for model in FREE_TIER_MODELS:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                for model in GEMINI_MODELS:
                     try:
                         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
                         res = await client.post(url, json=payload)
@@ -100,7 +101,6 @@ class AgentService:
                                 text_parts = candidates[0].get("content", {}).get("parts", [])
                                 reply_text = "".join([p.get("text", "") for p in text_parts])
                                 if reply_text:
-                                    # Detect movie query intent for automatic app navigation
                                     if "search" in user_lower or "recommend" in user_lower or "find" in user_lower:
                                         clean_q = user_lower.replace("search", "").replace("recommend", "").replace("find", "").strip()
                                         if clean_q and len(clean_q) > 2:
@@ -113,10 +113,10 @@ class AgentService:
                                         suggestedPrompts=suggested_prompts
                                     )
                         elif res.status_code == 429:
-                            logger.warning(f"Model {model} rate limited (429). Rotating to next free model...")
+                            logger.warning(f"Model {model} hit quota 429. Rotating to next model in swarm...")
                             continue
                         else:
-                            logger.warning(f"Model {model} returned HTTP {res.status_code}: {res.text}. Rotating...")
+                            logger.warning(f"Model {model} HTTP {res.status_code}. Rotating...")
                             continue
                     except Exception as err:
                         logger.warning(f"Error calling model {model}: {err}. Rotating...")
@@ -138,10 +138,11 @@ class AgentService:
                 suggestedPrompts=suggested_prompts
             )
 
-        # 4. Clear Informative Response
+        # 4. Fallback greeting
+        name_part = f" for you"
         return AgentChatResponse(
             success=True,
-            reply=f"🎬 **Pure Cinema AI Assistant**\nI'm ready to help you discover films and TV broadcasts! Try asking:\n• *\"Recommend mind-bending sci-fi movies\"*\n• *\"Who starred in Interstellar?\"*\n• *\"Open my Watchlist\"*",
+            reply=f"🎬 I'm here to help you find cinema masterpieces and live television. Ask me for recommendations by genre, mood, director, or actor!",
             actions=[],
             suggestedPrompts=suggested_prompts
         )

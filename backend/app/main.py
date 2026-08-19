@@ -5,17 +5,18 @@ from app.routers import auth, movies, watchlist, agent, iptv, payment
 
 app = FastAPI(
     title="Pure Cinema API Backend",
-    description="FastAPI UV-based Backend with Google GenAI / ADK Agent Integration",
+    description="FastAPI Backend with Google Gemini AI CineBot Rotator & Cinema Streaming Engine",
     version="1.0.0"
 )
 
-# Enable CORS for Flutter app (Web, Desktop, Mobile)
+# Robust CORS for Flutter Web, iOS, Android, and Desktop
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include Routers
