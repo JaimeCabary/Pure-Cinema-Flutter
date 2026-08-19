@@ -430,6 +430,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     // Normal Layout (Desktop / Mobile with Collapsible Channel Guide)
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

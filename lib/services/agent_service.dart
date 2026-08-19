@@ -87,7 +87,7 @@ class AgentService {
             headers: {'Content-Type': 'application/json'},
             body: json.encode(payload),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
