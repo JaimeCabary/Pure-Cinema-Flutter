@@ -21,10 +21,9 @@ class AgentService {
 
   // ADK Model Swarm Priority
   static const List<String> _geminiModels = [
+    'gemini-3.6-flash',
     'gemini-2.5-flash',
     'gemini-2.5-flash-lite-preview-06-17',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
     'gemini-1.5-flash',
     'gemini-1.5-flash-8b',
   ];

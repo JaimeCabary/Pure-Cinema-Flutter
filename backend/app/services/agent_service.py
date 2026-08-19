@@ -53,10 +53,9 @@ When recommending specific cinema, suggest actions using structured action tools
 
 # ADK Model Swarm Priority (Matching Heccker-OS Rotator)
 GEMINI_MODELS = [
+    "gemini-3.6-flash",
     "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
     "gemini-1.5-flash",
     "gemini-1.5-flash-8b",
 ]

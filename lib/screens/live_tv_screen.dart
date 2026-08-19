@@ -648,15 +648,15 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           if (_indicatorText != null) _buildIndicatorBadge(),
 
           // Bottom Controls & Advanced Interactive Seeker
-          AnimatedOpacity(
-            opacity: _showControls ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: IgnorePointer(
-              ignoring: !_showControls,
-              child: Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AnimatedOpacity(
+              opacity: _showControls ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: IgnorePointer(
+                ignoring: !_showControls,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: const BoxDecoration(
