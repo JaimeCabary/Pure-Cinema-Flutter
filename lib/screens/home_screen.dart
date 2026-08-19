@@ -224,43 +224,43 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                   // 1. Best Picks (Curated Masterpieces)
-                  _buildSectionHeader('Best Picks', badge: 'CURATED', query: 'Best Picks'),
+                  _buildSectionHeader('Best Picks', query: 'Best Picks'),
                   _buildMovieRow(_bestPicks, 'Best Picks'),
 
                   // 2. Trending Now
-                  _buildSectionHeader('Trending Now', badge: 'HOT', query: 'Trending'),
+                  _buildSectionHeader('Trending Now', query: 'Trending'),
                   _buildMovieRow(_trending, 'Trending Now'),
 
                   // 3. Popular TV Shows & Series
-                  _buildSectionHeader('TV Shows & Series', badge: 'SERIES', query: 'TV Shows'),
+                  _buildSectionHeader('TV Shows & Series', query: 'TV Shows'),
                   _buildMovieRow(_tvShows, 'TV Shows & Series'),
 
                   // 4. Top Rated Docuseries
-                  _buildSectionHeader('Docuseries & Nature', badge: '4K HDR', query: 'Documentary'),
+                  _buildSectionHeader('Docuseries & Nature', query: 'Documentary'),
                   _buildMovieRow(_docuseries, 'Docuseries & Nature'),
 
                   // 5. Biographies & True Stories
-                  _buildSectionHeader('Biographies & True Stories', badge: 'TRUE STORY', query: 'Biography'),
+                  _buildSectionHeader('Biographies & True Stories', query: 'Biography'),
                   _buildMovieRow(_biographies, 'Biographies & True Stories'),
 
                   // 6. Sports & Legends
-                  _buildSectionHeader('Live Sports & Legends', badge: 'SPORTS', query: 'Sports'),
+                  _buildSectionHeader('Live Sports & Legends', query: 'Sports'),
                   _buildMovieRow(_sports, 'Live Sports & Legends'),
 
                   // 7. Romance & Heartfelt Cinema
-                  _buildSectionHeader('Romance & Heartfelt Cinema', badge: 'ROMANCE', query: 'Romance'),
+                  _buildSectionHeader('Romance & Heartfelt Cinema', query: 'Romance'),
                   _buildMovieRow(_romance, 'Romance & Heartfelt Cinema'),
 
                   // 8. Faith & Spiritual Journeys
-                  _buildSectionHeader('Faith & Spiritual Journeys', badge: 'FAITH', query: 'Faith'),
+                  _buildSectionHeader('Faith & Spiritual Journeys', query: 'Faith'),
                   _buildMovieRow(_faith, 'Faith & Spiritual Journeys'),
 
                   // 9. Top Rated Masterpieces
-                  _buildSectionHeader('Top Rated Masterpieces', badge: 'CRITICS CHOICE', query: 'Top Rated'),
+                  _buildSectionHeader('Top Rated Masterpieces', query: 'Top Rated'),
                   _buildMovieRow(_topRated, 'Top Rated Masterpieces'),
 
                   // 10. Animation & Anime Masterworks
-                  _buildSectionHeader('Animation & Anime', badge: 'ANIME', query: 'Animation'),
+                  _buildSectionHeader('Animation & Anime', query: 'Animation'),
                   _buildMovieRow(_animation, 'Animation & Anime'),
 
                   // Bottom Spacing for Floating Capsule Dock Navbar
@@ -475,45 +475,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, {String? badge, required String query}) {
+  Widget _buildSectionHeader(String title, {required String query}) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 10.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                if (badge != null) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1F),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF3F3F46), width: 0.8),
-                    ),
-                    child: Text(
-                      badge,
-                      style: AppFonts.sCoreDream(
-                        color: Colors.white,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  title,
-                  style: AppFonts.sCoreDream(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
+            Text(
+              title,
+              style: AppFonts.sCoreDream(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
             ),
             GestureDetector(
               onTap: () => _openCategorySearch(title, query),
