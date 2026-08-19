@@ -19,13 +19,13 @@ class AgentService {
   static const String _productionUrl = 'https://pure-cinema-backend.onrender.com';
   static const String _fallbackGeminiKey = 'AIzaSyCAx6iZnoYi7E3yvOQ9t-rVmkxYKFbEfyo';
 
-  // Gemini model priority matching Heccker-OS architecture
+  // Gemini model priority matching the new standout models
   static const List<String> _geminiModels = [
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
   ];
 
   static String get baseUrl {
@@ -92,11 +92,9 @@ class AgentService {
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
       }
-    } catch (_) {
-      // Backend cold-starting or sleeping on Render: seamlessly fall through to direct client-side Gemini
-    }
+    } catch (_) {}
 
-    // 3. Direct Client-Side Gemini Rotator Fallback (Zero Backend Reliance)
+    // 3. Direct Client-Side Gemini Rotator Swarm
     for (final model in _geminiModels) {
       try {
         final contents = [];
@@ -119,7 +117,7 @@ class AgentService {
             'contents': contents,
             'generationConfig': {'temperature': 0.7, 'maxOutputTokens': 500}
           }),
-        ).timeout(const Duration(seconds: 5));
+        ).timeout(const Duration(seconds: 4));
 
         if (geminiRes.statusCode == 200) {
           final data = json.decode(geminiRes.body);

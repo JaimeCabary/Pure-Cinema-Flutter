@@ -22,15 +22,13 @@ Your goals:
 Keep responses friendly, elegant, cinematic, and concise. Format movie titles in bold. Do not use raw asterisks around whole paragraphs or robotic boilerplate.
 """
 
-# Gemini Model Rotator Priority List (Matching Heccker-OS Architecture)
+# Gemini Model Swarm Priority (Matching Latest Google AI Studio Releases)
 GEMINI_MODELS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
     "gemini-3.5-flash",
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-2.0-flash-lite",
 ]
 
 class AgentService:
@@ -67,7 +65,7 @@ class AgentService:
                 suggestedPrompts=["Find news channels", "Recommend movies", "Go to Home"]
             )
 
-        # 2. Direct Google Gemini Call with Model Rotator
+        # 2. Direct Google Gemini Call with Model Rotator Swarm
         gemini_key = settings.GEMINI_API_KEY.strip()
         if gemini_key:
             contents = []
@@ -112,6 +110,9 @@ class AgentService:
                                         actions=actions,
                                         suggestedPrompts=suggested_prompts
                                     )
+                        elif res.status_code == 403:
+                            logger.error(f"Gemini API Key reported as leaked/blocked (403): {res.text}")
+                            break
                         elif res.status_code == 429:
                             logger.warning(f"Model {model} hit quota 429. Rotating to next model in swarm...")
                             continue
@@ -122,27 +123,29 @@ class AgentService:
                         logger.warning(f"Error calling model {model}: {err}. Rotating...")
                         continue
 
-        # 3. Dynamic TMDB Search Fallback if Gemini key is unset or rate limited
-        search_results = await TMDBService.search_movies(user_message)
-        if search_results and len(search_results) > 0:
-            top_movie = search_results[0]
-            actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
-            
-            movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) — ⭐ {m.voteAverage}/10\n  *{m.overview[:120]}...*" for m in search_results[:3]])
-            reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\n🎬 Tap below to watch **{top_movie.title}**!"
-            
-            return AgentChatResponse(
-                success=True,
-                reply=reply,
-                actions=actions,
-                suggestedPrompts=suggested_prompts
-            )
+        # 3. Dynamic TMDB Search Fallback if Gemini key is blocked or unset
+        try:
+            search_results = await TMDBService.search_movies(user_message)
+            if search_results and len(search_results) > 0:
+                top_movie = search_results[0]
+                actions.append(ActionCommand(type="OPEN_MOVIE", payload={"movieId": top_movie.id, "title": top_movie.title}))
+                
+                movie_list_str = "\n".join([f"• **{m.title}** ({m.releaseDate[:4] if m.releaseDate else 'N/A'}) — ⭐ {m.voteAverage}/10\n  _{m.overview[:120]}..._" for m in search_results[:3]])
+                reply = f"Here are curated cinema picks for **\"{user_message}\"**:\n\n{movie_list_str}\n\n🎬 Tap below to watch **{top_movie.title}**!"
+                
+                return AgentChatResponse(
+                    success=True,
+                    reply=reply,
+                    actions=actions,
+                    suggestedPrompts=suggested_prompts
+                )
+        except Exception:
+            pass
 
         # 4. Fallback greeting
-        name_part = f" for you"
         return AgentChatResponse(
             success=True,
-            reply=f"🎬 I'm here to help you find cinema masterpieces and live television. Ask me for recommendations by genre, mood, director, or actor!",
+            reply=f"🎬 I'm Pure Cinema AI CineBot! Ask me for movie recommendations, directors, cast trivia, or navigation.",
             actions=[],
             suggestedPrompts=suggested_prompts
         )
