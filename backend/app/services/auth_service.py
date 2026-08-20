@@ -55,57 +55,32 @@ class AuthService:
     def login(email: str, password: str) -> AuthResponse:
         clean_email = email.strip().lower()
 
-        # Admin Shalom bypass
-        if "shalom" in clean_email:
-            user = UserResponse(
-                id="admin-shalom-id",
-                email="shalom@purecinema.internal",
-                name="Shalom (Admin)",
-                avatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80",
-                role="ADMIN"
+        # Check if user exists in database
+        if clean_email not in USERS_DB:
+            return AuthResponse(
+                success=False,
+                error="Account not found with this email. Please register first."
             )
-            token = create_jwt_token(user.id, user.email, user.role)
-            return AuthResponse(success=True, user=user, token=token, message="Welcome Admin Shalom!")
 
-        # Demo bypass
-        if clean_email in ["demo", "guest", "demo@purecinema.internal"]:
-            user = UserResponse(
-                id="demo-user-id",
-                email="demo@purecinema.internal",
-                name="VIP Guest",
-                role="USER"
+        record = USERS_DB[clean_email]
+
+        # Strict password verification
+        if record.get("password") != password:
+            return AuthResponse(
+                success=False,
+                error="Incorrect password. Please verify your credentials."
             )
-            token = create_jwt_token(user.id, user.email, user.role)
-            return AuthResponse(success=True, user=user, token=token, message="Welcome VIP Guest!")
 
-        # Check DB
-        if clean_email in USERS_DB:
-            record = USERS_DB[clean_email]
-            if record["password"] == password:
-                user = UserResponse(
-                    id=record["id"],
-                    email=record["email"],
-                    name=record["name"],
-                    avatar=record.get("avatar"),
-                    role=record.get("role", "USER")
-                )
-                token = create_jwt_token(user.id, user.email, user.role)
-                return AuthResponse(success=True, user=user, token=token)
-
-        # Dynamic sign in fallback
-        user_id = f"usr_{abs(hash(clean_email))}"
-        name = clean_email.split("@")[0].capitalize()
-        role = "ADMIN" if is_admin_email(clean_email) else "USER"
-        USERS_DB[clean_email] = {
-            "id": user_id,
-            "email": clean_email,
-            "name": name,
-            "role": role,
-            "password": password
-        }
-        user = UserResponse(id=user_id, email=clean_email, name=name, role=role)
+        # Password verified successfully
+        user = UserResponse(
+            id=record["id"],
+            email=record["email"],
+            name=record["name"],
+            avatar=record.get("avatar"),
+            role=record.get("role", "USER")
+        )
         token = create_jwt_token(user.id, user.email, user.role)
-        return AuthResponse(success=True, user=user, token=token)
+        return AuthResponse(success=True, user=user, token=token, message="Signed in successfully")
 
     @staticmethod
     def register(name: str, email: str, password: str) -> AuthResponse:

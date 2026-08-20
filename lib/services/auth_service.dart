@@ -109,34 +109,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final cleanEmail = email.trim().toLowerCase();
-
-    // 1. Instant secret Shalom admin bypass
-    if (cleanEmail == 'shalom' || cleanEmail.contains('shalom')) {
-      final user = User(
-        id: 'admin-shalom-id',
-        email: cleanEmail.contains('@') ? cleanEmail : 'shalom@purecinema.internal',
-        name: 'Shalom (Admin)',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
-        role: 'ADMIN',
-      );
-      await _saveSession(user, 'pc_admin_token');
-      return {'success': true, 'user': user};
-    }
-
-    // 2. Demo bypass
-    if (cleanEmail == 'demo' || cleanEmail == 'guest') {
-      final user = User(
-        id: 'demo-user-id',
-        email: 'demo@purecinema.internal',
-        name: 'VIP Guest',
-        role: 'USER',
-      );
-      await _saveSession(user, 'pc_demo_token');
-      return {'success': true, 'user': user};
-    }
-
-    // 3. Call Next.js API
+    // 1. Call Backend API
     try {
       final response = await _postWithFallback(
         '/api/auth/mobile/login',
@@ -150,19 +123,15 @@ class AuthService {
         await _saveSession(user, data['token'] as String?);
         return {'success': true, 'user': user};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Invalid credentials'};
+        final err = data['error'] ?? data['detail'] ?? 'Incorrect email or password. Please try again.';
+        return {'success': false, 'error': err};
       }
     } catch (e) {
-      debugPrint('Next.js API error during login, attempting local fallback: $e');
-      // Graceful offline fallback
-      final user = User(
-        id: 'usr_${cleanEmail.hashCode}',
-        email: cleanEmail,
-        name: cleanEmail.split('@')[0],
-        role: 'USER',
-      );
-      await _saveSession(user, 'pc_offline_token');
-      return {'success': true, 'user': user, 'isOffline': true};
+      debugPrint('Auth API error during login: $e');
+      return {
+        'success': false,
+        'error': 'Unable to connect to authentication server. Please check your network connection.'
+      };
     }
   }
 
