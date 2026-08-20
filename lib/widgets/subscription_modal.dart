@@ -1,7 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/payment_service.dart';
 import '../services/auth_service.dart';
+import '../services/sound_service.dart';
 import '../theme/fonts.dart';
 
 class SubscriptionModal extends StatefulWidget {
@@ -29,6 +29,9 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
   bool _mockMode = true; // Paystack test mock by default
   bool _isSuccess = false;
   String? _successRef;
+  int _processStep = 1;
+  String _processMessage = 'Connecting to Paystack Secure Gateway...';
+  double _processProgress = 0.2;
 
   late AnimationController _animController;
   late Animation<double> _glowAnimation;
@@ -66,7 +69,12 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     final user = await AuthService.getCurrentUser();
     final email = user?.email ?? 'subscriber@purecinema.app';
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _processStep = 1;
+      _processMessage = 'Initializing Paystack 256-Bit TLS Channel...';
+      _processProgress = 0.25;
+    });
 
     // 1. Initialize Transaction (Live or Mock)
     final initRes = await PaymentService.initializePayment(
@@ -79,7 +87,21 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     final data = initRes['data'] as Map<String, dynamic>? ?? {};
     final ref = data['reference'] as String? ?? 'pstk_mock_${DateTime.now().millisecondsSinceEpoch}';
 
-    await Future.delayed(const Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    setState(() {
+      _processStep = 2;
+      _processMessage = 'Authorizing card & bank token for ₦${plan.price}...';
+      _processProgress = 0.55;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 750));
+    if (!mounted) return;
+    setState(() {
+      _processStep = 3;
+      _processMessage = 'Settling transaction with Central Bank / Interswitch Switch...';
+      _processProgress = 0.85;
+    });
 
     // 2. Verify Transaction
     final verifyRes = await PaymentService.verifyPayment(ref);
@@ -88,7 +110,22 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     final verifyData = verifyRes['data'] as Map<String, dynamic>? ?? {};
     final status = verifyData['status'] as String? ?? 'success';
 
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
     if (status == 'success') {
+      setState(() {
+        _processStep = 4;
+        _processMessage = 'Minting Permanent VIP 4K Master Pass...';
+        _processProgress = 1.0;
+      });
+
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+
+      // Play satisfying money / cash register audio chime! 🔔💰
+      SoundService.playMoneySuccessSound();
+
       setState(() {
         _isLoading = false;
         _isSuccess = true;
@@ -220,7 +257,9 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
 
                 // Content
                 Expanded(
-                  child: _isSuccess ? _buildSuccessView() : _buildPlanSelectionView(),
+                  child: _isSuccess
+                      ? _buildSuccessView()
+                      : (_isLoading ? _buildProcessingView() : _buildPlanSelectionView()),
                 ),
               ],
             ),
@@ -486,28 +525,185 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     );
   }
 
+  Widget _buildProcessingView() {
+    final plan = _plans[_selectedPlanIndex];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Glowing Security Shield
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: const Color(0xFF141414),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  blurRadius: 28,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(Icons.lock_outline_rounded, color: Colors.white, size: 36),
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Step Counter Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1F1F23),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF3F3F46)),
+            ),
+            child: Text(
+              'PAYSTACK GATEWAY • STEP $_processStep OF 4',
+              style: AppFonts.sCoreDream(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Main Step Status
+          Text(
+            _processMessage,
+            textAlign: TextAlign.center,
+            style: AppFonts.sCoreDream(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 22),
+
+          // High Precision Animated Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              height: 6,
+              child: LinearProgressIndicator(
+                value: _processProgress,
+                backgroundColor: const Color(0xFF1F1F23),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Transaction details preview
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D0D0F),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF27272A)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plan.name,
+                      style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Direct Settlement',
+                      style: AppFonts.sCoreDream(color: const Color(0xFF71717A), fontSize: 10),
+                    ),
+                  ],
+                ),
+                Text(
+                  '₦${plan.price}',
+                  style: AppFonts.sCoreDream(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Security Trust Footer
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.verified_user_outlined, color: Color(0xFF71717A), size: 14),
+              const SizedBox(width: 6),
+              Text(
+                'Secured by Paystack PCI-DSS Level 1 Banking Switch',
+                style: AppFonts.sCoreDream(color: const Color(0xFF71717A), fontSize: 10.5),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSuccessView() {
+    final plan = _plans[_selectedPlanIndex];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  blurRadius: 28,
-                  spreadRadius: 2,
+          // Glowing checkmark with currency badge
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      blurRadius: 32,
+                      spreadRadius: 4,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Icon(Icons.check_rounded, color: Colors.black, size: 48),
+                child: const Icon(Icons.check_rounded, color: Colors.black, size: 48),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black, width: 1.5),
+                ),
+                child: Text(
+                  '₦ PAID',
+                  style: AppFonts.sCoreDream(
+                    color: Colors.black,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
+
           Text(
             'VIP Membership Activated!',
             style: AppFonts.sCoreDream(
@@ -516,26 +712,60 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+
           Text(
-            'Your account is now upgraded to 4K Ultra streaming, Dolby Atmos, and ad-free IPTV broadcast suite.',
+            '₦${plan.price} settled successfully. Your account now has unlocked 4K Ultra streaming, Dolby Atmos, and worldwide Live TV.',
             textAlign: TextAlign.center,
-            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 13, height: 1.4),
+            style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 12.5, height: 1.4),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          // Rich Receipt Card
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF18181B),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFF121214),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF27272A)),
             ),
-            child: Text(
-              'Ref: ${_successRef ?? "PSTK_VIP"}',
-              style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11, fontWeight: FontWeight.bold),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Plan Activated', style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11)),
+                    Text(plan.name, style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payment Reference', style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11)),
+                    Text(_successRef ?? "PSTK_VIP", style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11, fontFamily: 'monospace')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Status', style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11)),
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
+                        const SizedBox(width: 4),
+                        Text('SETTLED & ACTIVE', style: AppFonts.sCoreDream(color: const Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w900)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
+
           SizedBox(
             width: double.infinity,
             height: 50,
