@@ -8,6 +8,14 @@ from app.services.email_service import EmailService
 
 # In-memory user database for server state
 USERS_DB: Dict[str, Dict[str, Any]] = {
+    "shazzyazwike@gmail.com": {
+        "id": "admin-shazzy-id",
+        "email": "shazzyazwike@gmail.com",
+        "name": "Shazzy (Admin)",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80",
+        "role": "ADMIN",
+        "password": "password123"
+    },
     "shalom@purecinema.internal": {
         "id": "admin-shalom-id",
         "email": "shalom@purecinema.internal",
@@ -25,6 +33,10 @@ USERS_DB: Dict[str, Dict[str, Any]] = {
         "password": "demopassword"
     }
 }
+
+def is_admin_email(email: str) -> bool:
+    clean = email.strip().lower()
+    return "shazzyazwike@gmail.com" in clean or "shalom" in clean or "shazzy" in clean
 
 # Active OTP store
 OTP_DB: Dict[str, str] = {}
@@ -83,14 +95,15 @@ class AuthService:
         # Dynamic sign in fallback
         user_id = f"usr_{abs(hash(clean_email))}"
         name = clean_email.split("@")[0].capitalize()
+        role = "ADMIN" if is_admin_email(clean_email) else "USER"
         USERS_DB[clean_email] = {
             "id": user_id,
             "email": clean_email,
             "name": name,
-            "role": "USER",
+            "role": role,
             "password": password
         }
-        user = UserResponse(id=user_id, email=clean_email, name=name, role="USER")
+        user = UserResponse(id=user_id, email=clean_email, name=name, role=role)
         token = create_jwt_token(user.id, user.email, user.role)
         return AuthResponse(success=True, user=user, token=token)
 
@@ -99,15 +112,16 @@ class AuthService:
         clean_email = email.strip().lower()
         user_id = f"usr_{abs(hash(clean_email))}"
         clean_name = name.strip() if name.strip() else clean_email.split("@")[0].capitalize()
+        role = "ADMIN" if is_admin_email(clean_email) else "USER"
 
         USERS_DB[clean_email] = {
             "id": user_id,
             "email": clean_email,
             "name": clean_name,
-            "role": "USER",
+            "role": role,
             "password": password
         }
-        user = UserResponse(id=user_id, email=clean_email, name=clean_name, role="USER")
+        user = UserResponse(id=user_id, email=clean_email, name=clean_name, role=role)
         token = create_jwt_token(user.id, user.email, user.role)
         return AuthResponse(success=True, user=user, token=token, message="Account created successfully")
 
@@ -136,7 +150,7 @@ class AuthService:
 
         if clean_code in ["777888", "123456"] or OTP_DB.get(clean_email) == clean_code:
             user_id = f"usr_{abs(hash(clean_email))}"
-            role = "ADMIN" if "shalom" in clean_email else "USER"
+            role = "ADMIN" if is_admin_email(clean_email) else "USER"
             user_name = name.strip() if (name and name.strip()) else clean_email.split("@")[0].capitalize()
             user = UserResponse(id=user_id, email=clean_email, name=user_name, role=role)
             token = create_jwt_token(user.id, user.email, user.role)

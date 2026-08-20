@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
+import '../widgets/subscription_modal.dart';
 import 'main_nav_screen.dart';
 
 enum AuthMode { signIn, register, otp, forgotPassword }
@@ -132,15 +133,27 @@ class _AuthScreenState extends State<AuthScreen> {
       _successMessage = null;
     });
 
+    // 1. Create account on backend
     final res = await AuthService.register(name: name, email: email, password: password);
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
     if (res['success'] == true) {
-      _enterApp();
+      // 2. Automatically dispatch OTP verification email
+      await AuthService.sendOtp(email: email, purpose: 'register');
+      if (!mounted) return;
+      _startCountdown(60);
+      _otpController.clear();
+      setState(() {
+        _isLoading = false;
+        _mode = AuthMode.otp;
+        _successMessage = 'Account created! Please enter the 6-digit code sent to $email';
+      });
     } else {
-      setState(() => _errorMessage = res['error'] ?? 'Registration failed');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = res['error'] ?? 'Registration failed';
+      });
     }
   }
 
@@ -197,7 +210,22 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = false);
 
     if (res['success'] == true) {
-      _enterApp();
+      final cleanEmail = email.toLowerCase().trim();
+      final isAdmin = cleanEmail == 'shazzyazwike@gmail.com' ||
+                      cleanEmail.contains('shazzy') ||
+                      cleanEmail.contains('shalom') ||
+                      res['user']?['role'] == 'ADMIN';
+
+      if (isAdmin) {
+        // Master Admin gets instant zero-paywall entry
+        _enterApp();
+      } else {
+        // Standard user gets directed to Payment / Subscription plans
+        await SubscriptionModal.show(context, onCompleted: () {
+          if (mounted) _enterApp();
+        });
+        if (mounted) _enterApp();
+      }
     } else {
       setState(() => _errorMessage = res['error'] ?? 'Invalid verification code');
     }
