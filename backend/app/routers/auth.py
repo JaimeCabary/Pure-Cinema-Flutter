@@ -26,8 +26,8 @@ def register(req: UserRegisterRequest):
     return res
 
 @router.post("/send-otp", response_model=AuthResponse)
-def send_otp(req: SendOtpRequest):
-    return AuthService.send_otp(req.email, req.purpose or "login")
+async def send_otp(req: SendOtpRequest):
+    return await AuthService.send_otp(req.email, req.purpose or "login")
 
 @router.post("/verify-otp", response_model=AuthResponse)
 def verify_otp(req: VerifyOtpRequest):

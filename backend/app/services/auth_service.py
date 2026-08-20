@@ -1,8 +1,10 @@
 import jwt
+import random
 import datetime
 from typing import Dict, Any, Optional
 from app.config import settings
 from app.models.schemas import UserResponse, AuthResponse
+from app.services.email_service import EmailService
 
 # In-memory user database for server state
 USERS_DB: Dict[str, Dict[str, Any]] = {
@@ -110,14 +112,21 @@ class AuthService:
         return AuthResponse(success=True, user=user, token=token, message="Account created successfully")
 
     @staticmethod
-    def send_otp(email: str, purpose: str = "login") -> AuthResponse:
+    async def send_otp(email: str, purpose: str = "login") -> AuthResponse:
         clean_email = email.strip().lower()
-        dev_code = "777888"
-        OTP_DB[clean_email] = dev_code
+        # Generate genuine 6-digit verification code
+        random_code = str(random.randint(100000, 999999))
+        OTP_DB[clean_email] = random_code
+        
+        # Dispatch real email in background via Resend API
+        try:
+            await EmailService.send_otp_email(clean_email, random_code, purpose=purpose)
+        except Exception as e:
+            print(f"Error dispatching OTP email: {e}")
+
         return AuthResponse(
             success=True,
-            message=f"Verification code sent to {clean_email}",
-            devCode=dev_code
+            message=f"Verification code sent to {clean_email}"
         )
 
     @staticmethod

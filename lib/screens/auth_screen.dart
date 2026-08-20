@@ -163,13 +163,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (res['success'] == true) {
       _startCountdown(60);
+      _otpController.clear();
       setState(() {
         _mode = AuthMode.otp;
         _successMessage = res['message'] ?? 'Verification code sent to your email!';
       });
-      if (res['devCode'] != null) {
-        _otpController.text = res['devCode'].toString();
-      }
     } else {
       setState(() => _errorMessage = res['error'] ?? 'Failed to send verification code');
     }
