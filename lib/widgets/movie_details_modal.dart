@@ -411,22 +411,6 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                         ),
                       ),
 
-                      // Close Button (Top Right)
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close, color: Colors.white, size: 18),
-                          ),
-                        ),
-                      ),
 
                       // Trailer Badge & Audio Toggle (Top Left)
                       Positioned(
