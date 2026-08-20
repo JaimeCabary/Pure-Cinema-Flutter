@@ -128,8 +128,10 @@ class AgentService:
             # Multi-turn conversation format
             contents = []
             for h in req.history[-8:]:
-                role = "user" if h.get("role") == "user" else "model"
-                contents.append({"role": role, "parts": [{"text": h.get("content", "")}]})
+                h_role = h.role if hasattr(h, "role") else (h.get("role", "user") if isinstance(h, dict) else "user")
+                h_content = h.content if hasattr(h, "content") else (h.get("content", "") if isinstance(h, dict) else "")
+                role = "user" if h_role == "user" else "model"
+                contents.append({"role": role, "parts": [{"text": h_content}]})
 
             contents.append({
                 "role": "user",
