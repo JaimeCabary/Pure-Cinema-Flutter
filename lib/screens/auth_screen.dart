@@ -432,8 +432,8 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               const SizedBox(height: 10),
                               _buildSecondaryButton(
-                                label: 'Email Me a Login Code',
-                                icon: Icons.mark_email_read_outlined,
+                                label: 'Sign in passwordless',
+                                icon: Icons.bolt_rounded,
                                 onPressed: () => _handleSendOtp(purpose: 'login'),
                               ),
                             ] else if (_mode == AuthMode.register) ...[
