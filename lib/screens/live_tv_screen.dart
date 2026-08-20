@@ -47,6 +47,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
 
   // Custom Stream URL controller
   final TextEditingController _customUrlController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -151,6 +152,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     _indicatorTimer?.cancel();
     _videoController?.dispose();
     _customUrlController.dispose();
+    _searchController.dispose();
     if (_isFullscreen) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -430,7 +432,7 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
     // Normal Layout (Desktop / Mobile with Collapsible Channel Guide)
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -479,59 +481,66 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             }
 
             // Mobile Layout
-            return OrientationBuilder(
-              builder: (context, orientation) {
-                final isLandscape = orientation == Orientation.landscape;
-                final screenH = MediaQuery.of(context).size.height;
-                final videoH = isLandscape
-                    ? screenH  // fill height in landscape
-                    : (_isChannelListCollapsed ? screenH * 0.82 : screenH * 0.30);
+            final mediaQuery = MediaQuery.of(context);
+            final isLandscape = mediaQuery.orientation == Orientation.landscape && mediaQuery.size.width > mediaQuery.size.height;
+            final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+            final screenH = mediaQuery.size.height;
 
-                return Stack(
+            // When keyboard is open, make video player compact so search and channels have plenty of room
+            final double videoH;
+            if (isLandscape) {
+              videoH = screenH;
+            } else if (isKeyboardOpen) {
+              videoH = screenH * 0.18;
+            } else if (_isChannelListCollapsed) {
+              videoH = screenH * 0.82;
+            } else {
+              videoH = screenH * 0.30;
+            }
+
+            return Stack(
+              children: [
+                Column(
                   children: [
-                    Column(
-                      children: [
-                        // Video Player Container
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeInOut,
-                          height: videoH,
-                          width: double.infinity,
-                          color: Colors.black,
-                          child: _buildVideoPlayer(),
-                        ),
-
-                        // Collapsible Channel Guide Body (hidden in landscape)
-                        if (!_isChannelListCollapsed && !isLandscape) ...[
-                          _buildGuideHeader(filteredChannels.length),
-                          _buildCategoryTabs(),
-                          _buildCountryChips(),
-                          _buildSearchField(),
-                          Expanded(child: _buildChannelList(filteredChannels)),
-                        ],
-                      ],
+                    // Video Player Container
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      height: videoH,
+                      width: double.infinity,
+                      color: Colors.black,
+                      child: _buildVideoPlayer(),
                     ),
 
-                    // Floating Expand Guide Button when collapsed on mobile (portrait only)
-                    if (_isChannelListCollapsed && !isLandscape)
-                      Positioned(
-                        bottom: 16,
-                        right: 16,
-                        child: FloatingActionButton.extended(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          elevation: 8,
-                          onPressed: () => setState(() => _isChannelListCollapsed = false),
-                          icon: const Icon(Icons.list_alt_rounded, size: 18),
-                          label: Text(
-                            'SHOW CHANNELS',
-                            style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
-                          ),
-                        ),
-                      ),
+                    // Collapsible Channel Guide Body (hidden in landscape)
+                    if (!_isChannelListCollapsed && !isLandscape) ...[
+                      _buildGuideHeader(filteredChannels.length),
+                      _buildCategoryTabs(),
+                      _buildCountryChips(),
+                      _buildSearchField(),
+                      Expanded(child: _buildChannelList(filteredChannels)),
+                    ],
                   ],
-                );
-              },
+                ),
+
+                // Floating Expand Guide Button when collapsed on mobile (portrait only)
+                if (_isChannelListCollapsed && !isLandscape && !isKeyboardOpen)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: FloatingActionButton.extended(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      elevation: 8,
+                      onPressed: () => setState(() => _isChannelListCollapsed = false),
+                      icon: const Icon(Icons.list_alt_rounded, size: 18),
+                      label: Text(
+                        'SHOW CHANNELS',
+                        style: AppFonts.sCoreDream(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -1078,16 +1087,20 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           border: Border.all(color: const Color(0xFF222222)),
         ),
         child: TextField(
+          controller: _searchController,
           style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
           onChanged: (v) => setState(() => _searchQuery = v),
           decoration: InputDecoration(
-            hintText: 'Search 10,000+ IPTV channels...',
+            hintText: 'Search 10,000+ TV channels...',
             hintStyle: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11),
             prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 14),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear, color: Colors.white38, size: 14),
-                    onPressed: () => setState(() => _searchQuery = ''),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
                   )
                 : null,
             border: InputBorder.none,
@@ -1112,11 +1125,14 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             ),
             const SizedBox(height: 4),
             TextButton(
-              onPressed: () => setState(() {
-                _selectedCategory = 'All Channels';
-                _selectedCountry = 'All';
-                _searchQuery = '';
-              }),
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _selectedCategory = 'All Channels';
+                  _selectedCountry = 'All';
+                  _searchQuery = '';
+                });
+              },
               child: Text('Reset Filters', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11)),
             ),
           ],
