@@ -6,43 +6,8 @@ import '../widgets/movie_card.dart';
 import '../widgets/movie_details_modal.dart';
 import 'watch_screen.dart';
 
-class WatchlistScreen extends StatefulWidget {
+class WatchlistScreen extends StatelessWidget {
   const WatchlistScreen({super.key});
-
-  @override
-  State<WatchlistScreen> createState() => _WatchlistScreenState();
-}
-
-class _WatchlistScreenState extends State<WatchlistScreen> {
-  List<Movie> _savedMovies = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWatchlist();
-    DatabaseService.watchlistNotifier.addListener(_loadWatchlist);
-  }
-
-  @override
-  void dispose() {
-    DatabaseService.watchlistNotifier.removeListener(_loadWatchlist);
-    super.dispose();
-  }
-
-  Future<void> _loadWatchlist() async {
-    final list = await DatabaseService.getWatchlist();
-    if (mounted) {
-      setState(() {
-        _savedMovies = list;
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _removeMovie(Movie movie) async {
-    await DatabaseService.removeFromWatchlist(movie.id);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,49 +16,42 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: ValueListenableBuilder<List<Movie>>(
+            valueListenable: DatabaseService.watchlistStream,
+            builder: (context, savedMovies, _) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'MY WATCHLIST',
-                        style: AppFonts.sCoreDream(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${_savedMovies.length} Title${_savedMovies.length == 1 ? '' : 's'} Saved',
-                        style: AppFonts.sCoreDream(
-                          color: const Color(0xFFA1A1AA),
-                          fontSize: 11,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MY WATCHLIST',
+                            style: AppFonts.sCoreDream(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${savedMovies.length} Title${savedMovies.length == 1 ? '' : 's'} Saved',
+                            style: AppFonts.sCoreDream(
+                              color: const Color(0xFFA1A1AA),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  if (_savedMovies.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 20),
-                      onPressed: _loadWatchlist,
-                      tooltip: 'Refresh Watchlist',
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : _savedMovies.isEmpty
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: savedMovies.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -118,53 +76,50 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Tap "+ MY LIST" on any movie or trailer to save it here.',
+                                  'Tap "+ MY LIST" on any movie or trailer to save it here in real time.',
                                   textAlign: TextAlign.center,
                                   style: AppFonts.sCoreDream(color: const Color(0xFF71717A), fontSize: 12),
                                 ),
                               ],
                             ),
                           )
-                        : RefreshIndicator(
-                            color: Colors.black,
-                            backgroundColor: Colors.white,
-                            onRefresh: _loadWatchlist,
-                            child: GridView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.only(bottom: 90),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 2 / 3.2,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 12,
-                              ),
-                              itemCount: _savedMovies.length,
-                              itemBuilder: (ctx, index) {
-                                final movie = _savedMovies[index];
-                                return MovieCard(
-                                  movie: movie,
-                                  isInWatchlist: true,
-                                  onTap: () {
-                                    MovieDetailsModal.show(
-                                      context,
-                                      movie,
-                                      isInWatchlist: true,
-                                      onToggleWatchlist: _loadWatchlist,
-                                    );
-                                  },
-                                  onPlay: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
-                                    );
-                                  },
-                                  onToggleWatchlist: () => _removeMovie(movie),
-                                );
-                              },
+                        : GridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 90),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 2 / 3.2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 12,
                             ),
+                            itemCount: savedMovies.length,
+                            itemBuilder: (ctx, index) {
+                              final movie = savedMovies[index];
+                              return MovieCard(
+                                key: ValueKey(movie.id),
+                                movie: movie,
+                                isInWatchlist: true,
+                                onTap: () {
+                                  MovieDetailsModal.show(
+                                    context,
+                                    movie,
+                                    isInWatchlist: true,
+                                  );
+                                },
+                                onPlay: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                                  );
+                                },
+                                onToggleWatchlist: () => DatabaseService.removeFromWatchlist(movie.id),
+                              );
+                            },
                           ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

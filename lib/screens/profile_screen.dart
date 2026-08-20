@@ -24,6 +24,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+    DatabaseService.watchlistNotifier.addListener(_loadProfile);
+  }
+
+  @override
+  void dispose() {
+    DatabaseService.watchlistNotifier.removeListener(_loadProfile);
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {

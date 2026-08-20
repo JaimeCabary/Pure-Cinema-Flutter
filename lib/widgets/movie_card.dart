@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/movie.dart';
+import '../services/database_service.dart';
 
 class MovieCard extends StatefulWidget {
   final Movie movie;
@@ -148,25 +149,35 @@ class _MovieCardState extends State<MovieCard> {
                                     child: const Icon(Icons.play_arrow, color: Colors.black, size: 16),
                                   ),
                                 ),
-                              if (widget.onPlay != null && widget.onToggleWatchlist != null)
-                                const SizedBox(width: 8),
-                              if (widget.onToggleWatchlist != null)
-                                GestureDetector(
-                                  onTap: widget.onToggleWatchlist,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: widget.isInWatchlist ? Colors.white24 : Colors.black54,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white38),
+                              const SizedBox(width: 8),
+                              ValueListenableBuilder<List<Movie>>(
+                                valueListenable: DatabaseService.watchlistStream,
+                                builder: (context, _, __) {
+                                  final inList = DatabaseService.isMovieInWatchlist(widget.movie.id);
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (widget.onToggleWatchlist != null) {
+                                        widget.onToggleWatchlist!();
+                                      } else {
+                                        DatabaseService.toggleWatchlist(widget.movie);
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: inList ? Colors.white24 : Colors.black54,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white38),
+                                      ),
+                                      child: Icon(
+                                        inList ? Icons.check : Icons.add,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      widget.isInWatchlist ? Icons.check : Icons.add,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
 
