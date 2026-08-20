@@ -30,10 +30,12 @@ class _SearchScreenState extends State<SearchScreen> {
     }
     _performSearch(initQ);
     _loadWatchlist();
+    DatabaseService.watchlistNotifier.addListener(_loadWatchlist);
   }
 
   @override
   void dispose() {
+    DatabaseService.watchlistNotifier.removeListener(_loadWatchlist);
     _searchController.dispose();
     super.dispose();
   }

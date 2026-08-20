@@ -70,6 +70,9 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
   void initState() {
     super.initState();
     _isInList = widget.isInWatchlist;
+    DatabaseService.isInWatchlist(widget.movie.id).then((inList) {
+      if (mounted) setState(() => _isInList = inList);
+    });
     _loadCreditsAndSimilar();
     _initTrailerPlayer();
   }
@@ -617,9 +620,10 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                       ),
                       const SizedBox(width: 12),
                       InkWell(
-                        onTap: () {
+                        onTap: () async {
+                          final newState = await DatabaseService.toggleWatchlist(movie);
                           widget.onToggleWatchlist?.call();
-                          setState(() => _isInList = !_isInList);
+                          if (mounted) setState(() => _isInList = newState);
                         },
                         borderRadius: BorderRadius.circular(6),
                         child: Container(

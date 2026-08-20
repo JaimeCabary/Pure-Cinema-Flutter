@@ -49,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
     _loadWatchlist();
     _loadUser();
+    DatabaseService.watchlistNotifier.addListener(_loadWatchlist);
   }
 
   Future<void> _loadUser() async {
@@ -60,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    DatabaseService.watchlistNotifier.removeListener(_loadWatchlist);
     _heroTimer?.cancel();
     _heroPageController.dispose();
     super.dispose();
