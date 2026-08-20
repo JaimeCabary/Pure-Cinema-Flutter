@@ -114,13 +114,17 @@ Pure Cinema is designed around an **OLED Obsidian Monochrome Aesthetic**:
 
 ### 5. VIP Memberships & Paystack Gateway
 * **Tiered Subscription Plans**:
-  - **Cinephile Monthly**: Full 4K HDR access + Unlimited Live TV.
-  - **Studio Premiere (Quarterly)**: Multi-device sync + Offline downloads.
-  - **Founder Lifetime Pass**: Permanent VIP access + AI CineBot priority tokens.
-* **Paystack Payment Integration**:
-  - Live card, bank, and USSD payments.
-  - Built-in Mock Mode for rapid developer testing and sandbox simulations.
-* **Post-Verification Paywall Enforcement**: Standard users are seamlessly guided to the VIP subscription checkout modal upon verifying their email.
+  - **Pure Cinema VIP Pass (Monthly)**: ₦2,500 – Full 4K HDR access + 10,000+ Live Channels + AI CineBot.
+  - **Cinema Ultra Pass (3 Months)**: ₦6,500 – Multi-device 4-screen sync + Priority IPTV transcoding.
+  - **Founder Lifetime Pass**: ₦25,000 – Permanent VIP access + Founder Gold Badge + Direct Studio Bitrate.
+* **Paystack Payment Integration (Live & Test Modes)**:
+  - Supports live and sandbox card, bank transfer, and USSD payments via Paystack API.
+  - Works with Paystack Test Keys (`sk_test_...` / `pk_test_...`) for zero-cost sandbox checkout validation with official test cards.
+  - Opens direct Paystack 256-Bit SSL checkout window with automated verification callback.
+* **👑 Master Admin Zero-Paywall Bypass**:
+  - Administrator accounts (`role == 'ADMIN'` or admin emails like Shalom/Shazzy) automatically bypass payment requirements.
+  - 1-click instant lifetime VIP pass activation without being charged.
+* **Post-Verification Paywall Enforcement**: Standard users are seamlessly guided to the VIP subscription checkout modal upon registration and login.
 
 ---
 
@@ -390,7 +394,10 @@ flowchart TD
 | `GET` | `/api/iptv/channels` | Retrieve categorized live TV channels | No |
 | `GET` | `/stream-proxy` | CORS bypass proxy for live HLS streams | No |
 | `GET` | `/api/payment/plans` | Retrieve Paystack membership plans | No |
-| `POST` | `/api/payment/verify` | Verify Paystack transaction reference | Yes |
+| `POST` | `/api/payment/initialize` | Initialize Paystack transaction & get checkout URL | No |
+| `GET` | `/api/payment/verify/{ref}` | Verify Paystack transaction reference | Yes |
+| `POST` | `/api/payment/admin-bypass` | Master Admin zero-paywall VIP pass activation | Admin Only |
+| `POST` | `/api/payment/webhook` | Asynchronous Paystack charge status listener | Paystack |
 | `GET` | `/api/movies/trending` | Fetch trending cinema titles from TMDB | No |
 
 ---
@@ -399,7 +406,7 @@ flowchart TD
 
 ### Prerequisites
 * **Flutter SDK**: `3.19+` ([Install Flutter](https://flutter.dev/docs/get-started/install))
-* **Python**: `3.10+` ([Install Python](https://python.org))
+* **Python**: `3.10+` or `uv` ([Install uv / Python](https://docs.astral.sh/uv/))
 * **Git**: Installed on your operating system
 
 ---
@@ -413,35 +420,38 @@ cd Pure-Cinema-Flutter
 ---
 
 ### 2. Launch Backend Service
-```bash
+```powershell
 cd backend
 
-# Create and activate virtual environment
+# Option A: Using UV (Recommended - Fast & Self-Managed)
+uv run python run.py
+
+# Option B: Using Standard Python Virtual Environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
+.venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start FastAPI server
 python run.py
 ```
 > **Backend URL**: `http://localhost:3000`  
+> **Interactive Swagger Docs**: `http://localhost:3000/docs`  
 > **Health Endpoint**: `http://localhost:3000/health`
 
 ---
 
 ### 3. Launch Flutter Client
 Open a second terminal at the project root:
-```bash
+```powershell
 # Install Flutter dependencies
 flutter pub get
 
-# Run on Web (Chrome)
+# Run on Chrome (Web)
 flutter run -d chrome
 
-# Or run for Android / iOS / Desktop
-flutter run
+# Run on Windows Desktop
+flutter run -d windows
+
+# Run for Android Emulator / Device
+flutter run -d android
 ```
 
 ---

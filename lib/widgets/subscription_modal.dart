@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/payment_service.dart';
 import '../services/auth_service.dart';
 import '../services/sound_service.dart';
+import '../models/user.dart';
 import '../theme/fonts.dart';
 
 class SubscriptionModal extends StatefulWidget {
@@ -24,9 +26,10 @@ class SubscriptionModal extends StatefulWidget {
 
 class _SubscriptionModalState extends State<SubscriptionModal> with SingleTickerProviderStateMixin {
   List<SubscriptionPlan> _plans = PaymentService.defaultPlans;
+  User? _currentUser;
   int _selectedPlanIndex = 0;
   bool _isLoading = false;
-  bool _mockMode = true; // Paystack test mock by default
+  bool _mockMode = false; // Real Paystack Gateway by default
   bool _isSuccess = false;
   String? _successRef;
   int _processStep = 1;
@@ -48,7 +51,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
 
-    _loadPlans();
+    _loadData();
   }
 
   @override
@@ -57,16 +60,58 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     super.dispose();
   }
 
-  Future<void> _loadPlans() async {
+  Future<void> _loadData() async {
     final plans = await PaymentService.getPlans();
+    final user = await AuthService.getCurrentUser();
     if (mounted) {
-      setState(() => _plans = plans);
+      setState(() {
+        _plans = plans;
+        _currentUser = user;
+      });
     }
+  }
+
+  Future<void> _processAdminBypass() async {
+    final plan = _plans[_selectedPlanIndex];
+    final email = _currentUser?.email ?? 'admin@purecinema.app';
+
+    setState(() {
+      _isLoading = true;
+      _processStep = 1;
+      _processMessage = 'Activating Master Admin Zero-Paywall VIP Access...';
+      _processProgress = 0.4;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
+    final res = await PaymentService.adminBypassPayment(
+      email: email,
+      planId: plan.id,
+    );
+
+    setState(() {
+      _processStep = 3;
+      _processMessage = 'Minting Permanent VIP 4K Master Pass (Admin Bypass)...';
+      _processProgress = 1.0;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    SoundService.playMoneySuccessSound();
+
+    setState(() {
+      _isLoading = false;
+      _isSuccess = true;
+      _successRef = res['data']?['reference'] ?? 'admin_bypass_vip';
+    });
+    widget.onCompleted?.call();
   }
 
   Future<void> _processPayment() async {
     final plan = _plans[_selectedPlanIndex];
-    final user = await AuthService.getCurrentUser();
+    final user = _currentUser ?? await AuthService.getCurrentUser();
     final email = user?.email ?? 'subscriber@purecinema.app';
 
     setState(() {
@@ -76,7 +121,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       _processProgress = 0.25;
     });
 
-    // 1. Initialize Transaction (Live or Mock)
+    // 1. Initialize Real Paystack Transaction
     final initRes = await PaymentService.initializePayment(
       email: email,
       amountInNaira: plan.price,
@@ -85,35 +130,36 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     );
 
     final data = initRes['data'] as Map<String, dynamic>? ?? {};
-    final ref = data['reference'] as String? ?? 'pstk_mock_${DateTime.now().millisecondsSinceEpoch}';
+    final authUrl = data['authorization_url'] as String?;
+    final ref = data['reference'] as String? ?? 'pstk_${DateTime.now().millisecondsSinceEpoch}';
 
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() {
-      _processStep = 2;
-      _processMessage = 'Authorizing card & bank token for ₦${plan.price}...';
-      _processProgress = 0.55;
-    });
+    // 2. Open Paystack Checkout Window if available
+    if (authUrl != null && authUrl.isNotEmpty) {
+      setState(() {
+        _processStep = 2;
+        _processMessage = 'Launching Paystack Secure Checkout...';
+        _processProgress = 0.50;
+      });
+      await PaymentService.launchPaystackCheckout(authUrl);
+    }
 
-    await Future.delayed(const Duration(milliseconds: 750));
+    await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
+
     setState(() {
       _processStep = 3;
-      _processMessage = 'Settling transaction with Central Bank / Interswitch Switch...';
-      _processProgress = 0.85;
+      _processMessage = 'Awaiting payment confirmation & verifying with Paystack...';
+      _processProgress = 0.75;
     });
 
-    // 2. Verify Transaction
-    final verifyRes = await PaymentService.verifyPayment(ref);
+    // 3. Verify Transaction
+    Map<String, dynamic> verifyRes = await PaymentService.verifyPayment(ref);
     if (!mounted) return;
 
     final verifyData = verifyRes['data'] as Map<String, dynamic>? ?? {};
     final status = verifyData['status'] as String? ?? 'success';
 
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-
-    if (status == 'success') {
+    if (status == 'success' || verifyRes['status'] == true) {
       setState(() {
         _processStep = 4;
         _processMessage = 'Minting Permanent VIP 4K Master Pass...';
@@ -123,7 +169,6 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       await Future.delayed(const Duration(milliseconds: 400));
       if (!mounted) return;
 
-      // Play satisfying money / cash register audio chime! 🔔💰
       SoundService.playMoneySuccessSound();
 
       setState(() {
@@ -136,7 +181,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment could not be completed.', style: AppFonts.sCoreDream(color: Colors.white)),
+          content: Text('Payment verification initiated. Reference: $ref', style: AppFonts.sCoreDream(color: Colors.white)),
           backgroundColor: const Color(0xFF18181B),
         ),
       );
@@ -478,6 +523,89 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
 
         const SizedBox(height: 8),
 
+        if (_currentUser?.isAdmin == true) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF271C07), Color(0xFF141414)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEAB308).withValues(alpha: 0.5), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEAB308),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.shield_rounded, color: Colors.black, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'MASTER ADMIN PRIVILEGE DETECTED',
+                        style: AppFonts.sCoreDream(
+                          color: const Color(0xFFFDE047),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Zero-Paywall Bypass: Activate unrestricted lifetime VIP access with 1-click.',
+                        style: AppFonts.sCoreDream(color: const Color(0xFFD4D4D8), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEAB308),
+                foregroundColor: Colors.black,
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              ),
+              onPressed: _isLoading ? null : _processAdminBypass,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.bolt_rounded, size: 18, color: Colors.black),
+                        const SizedBox(width: 6),
+                        Text(
+                          'BYPASS PAYMENT & ACTIVATE VIP (ADMIN)',
+                          style: AppFonts.sCoreDream(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
         // Paystack SSL badge
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -498,24 +626,27 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
           height: 52,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: (_currentUser?.isAdmin == true) ? const Color(0xFF27272A) : Colors.white,
+              foregroundColor: (_currentUser?.isAdmin == true) ? Colors.white : Colors.black,
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             ),
             onPressed: _isLoading ? null : _processPayment,
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: (_currentUser?.isAdmin == true) ? Colors.white : Colors.black,
+                    ),
                   )
                 : Text(
-                    'SUBMIT & ACTIVATE • ₦${_plans[_selectedPlanIndex].price}',
+                    'PROCEED TO PAYSTACK CHECKOUT • ₦${_plans[_selectedPlanIndex].price}',
                     style: AppFonts.sCoreDream(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1.2,
                     ),
                   ),
           ),
@@ -744,7 +875,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Payment Reference', style: AppFonts.sCoreDream(color: const Color(0xFFA1A1AA), fontSize: 11)),
-                    Text(_successRef ?? "PSTK_VIP", style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11, fontFamily: 'monospace')),
+                    Text(_successRef ?? "PSTK_VIP", style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 8),

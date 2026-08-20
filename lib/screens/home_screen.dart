@@ -137,6 +137,15 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
       _startHeroTimer();
+
+      // Immediately precache poster images for all loaded rows
+      for (final list in results) {
+        for (final movie in list) {
+          if (movie.posterUrl.isNotEmpty && mounted) {
+            precacheImage(CachedNetworkImageProvider(movie.posterUrl), context);
+          }
+        }
+      }
     }
   }
 

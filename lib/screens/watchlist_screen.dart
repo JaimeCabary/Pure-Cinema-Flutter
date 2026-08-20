@@ -103,7 +103,7 @@ class WatchlistScreen extends StatelessWidget {
                                   MovieDetailsModal.show(
                                     context,
                                     movie,
-                                    isInWatchlist: true,
+                                    true,
                                   );
                                 },
                                 onPlay: () {

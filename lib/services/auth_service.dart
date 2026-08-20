@@ -109,6 +109,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
     // 1. Call Backend API
     try {
       final response = await _postWithFallback(
@@ -247,7 +248,7 @@ class AuthService {
           id: 'usr_${cleanEmail.hashCode}',
           email: cleanEmail,
           name: name?.trim() ?? cleanEmail.split('@')[0],
-          role: cleanEmail.contains('shalom') ? 'ADMIN' : 'USER',
+          role: (cleanEmail == 'shalom@purecinema.internal' || cleanEmail == 'shazzyazwike@gmail.com') ? 'ADMIN' : 'USER',
         );
         await _saveSession(user, 'pc_otp_token');
         return {'success': true, 'user': user};

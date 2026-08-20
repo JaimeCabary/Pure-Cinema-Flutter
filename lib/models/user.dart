@@ -15,7 +15,7 @@ class User {
     this.token,
   });
 
-  bool get isAdmin => role.toUpperCase() == 'ADMIN' || email.toLowerCase().contains('shalom');
+  bool get isAdmin => role.toUpperCase() == 'ADMIN';
   bool get isVip => true;
 
   factory User.fromJson(Map<String, dynamic> json, {String? token}) {

@@ -87,7 +87,7 @@ class AuthService:
         clean_email = email.strip().lower()
         user_id = f"usr_{abs(hash(clean_email))}"
         clean_name = name.strip() if name.strip() else clean_email.split("@")[0].capitalize()
-        role = "ADMIN" if is_admin_email(clean_email) else "USER"
+        role = "USER"  # Any user that signs up is strictly assigned USER role
 
         USERS_DB[clean_email] = {
             "id": user_id,
@@ -124,9 +124,19 @@ class AuthService:
         clean_code = code.strip()
 
         if clean_code in ["777888", "123456"] or OTP_DB.get(clean_email) == clean_code:
-            user_id = f"usr_{abs(hash(clean_email))}"
-            role = "ADMIN" if is_admin_email(clean_email) else "USER"
-            user_name = name.strip() if (name and name.strip()) else clean_email.split("@")[0].capitalize()
+            existing_user = USERS_DB.get(clean_email)
+            user_id = existing_user["id"] if existing_user else f"usr_{abs(hash(clean_email))}"
+            role = existing_user["role"] if existing_user else "USER"
+            user_name = name.strip() if (name and name.strip()) else (existing_user["name"] if existing_user else clean_email.split("@")[0].capitalize())
+            
+            if clean_email not in USERS_DB:
+                USERS_DB[clean_email] = {
+                    "id": user_id,
+                    "email": clean_email,
+                    "name": user_name,
+                    "role": role,
+                    "password": ""
+                }
             user = UserResponse(id=user_id, email=clean_email, name=user_name, role=role)
             token = create_jwt_token(user.id, user.email, user.role)
             return AuthResponse(success=True, user=user, token=token)

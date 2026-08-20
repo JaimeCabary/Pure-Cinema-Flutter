@@ -69,21 +69,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
 
     if (res['success'] == true) {
-      // Prompt user with Choose Plan & Paystack Checkout flow
-      await SubscriptionModal.show(context, onCompleted: () {
+      final cleanEmail = email.toLowerCase().trim();
+      final isAdmin = cleanEmail == 'shazzyazwike@gmail.com' ||
+                      cleanEmail.contains('shazzy') ||
+                      cleanEmail.contains('shalom') ||
+                      res['user']?['role'] == 'ADMIN';
+
+      if (isAdmin) {
+        // Master Admin gets instant zero-paywall entry
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const MainNavScreen()),
             (route) => false,
           );
         }
-      });
+      } else {
+        // Prompt regular user with Paystack Checkout flow
+        await SubscriptionModal.show(context, onCompleted: () {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const MainNavScreen()),
+              (route) => false,
+            );
+          }
+        });
 
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainNavScreen()),
-          (route) => false,
-        );
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainNavScreen()),
+            (route) => false,
+          );
+        }
       }
     } else {
       setState(() {

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/fonts.dart';
+import '../widgets/subscription_modal.dart';
+import '../services/tmdb_service.dart';
 import 'landing_screen.dart';
+import 'main_nav_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,35 +21,83 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _slides = [
     {
       'title': 'Masterpiece Cinema\nin True 4K Ultra HD',
-      'subtitle': 'Stream curated film masterpieces, Hollywood blockbusters, and award-winning motion pictures with high bitrates.',
-      'image': 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=1000&q=80',
+      'subtitle': 'Stream curated film masterpieces, Hollywood blockbusters, and award-winning motion pictures with direct studio bitrates.',
+      'image': 'https://image.tmdb.org/t/p/original/xJHokMbljvjADYdit5fK5VQsXEG.jpg', // Interstellar 4K
       'badge': '4K HDR CINEMA',
     },
     {
       'title': '10,000+ Worldwide\nLive TV Channels',
       'subtitle': 'Experience seamless 60 FPS live sports, international news, cinema networks, and global broadcasts on demand.',
-      'image': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1000&q=80',
+      'image': 'https://image.tmdb.org/t/p/original/sAtoMqDVhNDQBc3QJL3RF6hlxGq.jpg', // Blade Runner 2049 4K
       'badge': '60 FPS BROADCAST',
     },
     {
-      'title': 'AI CineBot\nCinema Concierge',
-      'subtitle': 'Powered by Google GenAI ADK. Discover films tailored to your mood, query actors, and control your entire app experience.',
-      'image': 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1000&q=80',
-      'badge': 'AI CONCIERGE',
+      'title': 'Pure Cinema VIP\n& AI CineBot Access',
+      'subtitle': 'Unlock unrestricted 4K streaming, Dolby Atmos, and our GenAI ADK concierge with instant Paystack activation.',
+      'image': 'https://image.tmdb.org/t/p/original/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg', // Oppenheimer 4K
+      'badge': 'VIP PASS ₦2,500',
     },
   ];
 
-  Future<void> _finishOnboarding() async {
+  @override
+  void initState() {
+    super.initState();
+    // Proactively preload and cache all movie poster datasets in background during onboarding
+    _preloadMoviePosters();
+  }
+
+  void _preloadMoviePosters() {
+    Future.microtask(() async {
+      try {
+        final allMovies = await Future.wait([
+          TMDBService.fetchNowPlaying(),
+          TMDBService.fetchTrending(),
+          TMDBService.fetchTopRated(),
+          TMDBService.fetchTVShows(),
+          TMDBService.fetchDocuseries(),
+          TMDBService.fetchBiographies(),
+          TMDBService.fetchSports(),
+          TMDBService.fetchRomance(),
+          TMDBService.fetchFaith(),
+          TMDBService.fetchAnimation(),
+        ]);
+
+        if (!mounted) return;
+        for (final list in allMovies) {
+          for (final movie in list) {
+            if (movie.posterUrl.isNotEmpty && mounted) {
+              precacheImage(CachedNetworkImageProvider(movie.posterUrl), context);
+            }
+            if (movie.backdropUrl.isNotEmpty && mounted) {
+              precacheImage(CachedNetworkImageProvider(movie.backdropUrl), context);
+            }
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
+  Future<void> _finishOnboarding({bool enterDirectly = false}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_completed_onboarding', true);
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const LandingScreen(),
+        pageBuilder: (_, __, ___) => enterDirectly ? const MainNavScreen() : const LandingScreen(),
         transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         transitionDuration: const Duration(milliseconds: 300),
       ),
+    );
+  }
+
+  void _openPaystackVIPModal() {
+    SubscriptionModal.show(
+      context,
+      onCompleted: () {
+        // When VIP is successfully activated with checkmark verified celebration
+        _finishOnboarding(enterDirectly: true);
+      },
     );
   }
 
@@ -58,6 +109,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLastPage = _currentPage == _slides.length - 1;
+
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: Stack(
@@ -133,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: _finishOnboarding,
+                    onTap: () => _finishOnboarding(),
                     child: Text(
                       'SKIP',
                       style: AppFonts.sCoreDream(
@@ -162,7 +215,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isLastPage ? const Color(0xFF10B981) : Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -211,7 +264,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: isActive ? 24 : 6,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: isActive ? Colors.white : Colors.white24,
+                        color: isActive ? (isLastPage ? const Color(0xFF10B981) : Colors.white) : Colors.white24,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     );
@@ -219,39 +272,86 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // Primary Next / Get Started Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // Primary Next / Paystack VIP Activation Button
+                if (isLastPage) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 20),
+                      onPressed: _openPaystackVIPModal,
+                      label: Text(
+                        'ACTIVATE VIP WITH PAYSTACK',
+                        style: AppFonts.sCoreDream(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                     ),
-                    onPressed: () {
-                      if (_currentPage < _slides.length - 1) {
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF333333)),
+                        backgroundColor: const Color(0x33141414),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _finishOnboarding(),
+                      child: Text(
+                        'EXPLORE FREE CATALOGUE',
+                        style: AppFonts.sCoreDream(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
                         _pageController.nextPage(
                           duration: const Duration(milliseconds: 400),
                           curve: Curves.easeInOutCubic,
                         );
-                      } else {
-                        _finishOnboarding();
-                      }
-                    },
-                    child: Text(
-                      _currentPage == _slides.length - 1 ? 'GET STARTED' : 'CONTINUE',
-                      style: AppFonts.sCoreDream(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.0,
+                      },
+                      child: Text(
+                        'CONTINUE',
+                        style: AppFonts.sCoreDream(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
