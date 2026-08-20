@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Movie> _faith = [];
   List<Movie> _topRated = [];
   List<Movie> _animation = [];
+  List<Movie> _publicDomain = [];
   List<Movie> _heroMovies = [];
   
   int _currentHeroIndex = 0;
@@ -113,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
       TMDBService.fetchFaith(),
       TMDBService.fetchTopRated(),
       TMDBService.fetchAnimation(),
+      TMDBService.fetchPublicDomainMovies(),
     ]);
 
     if (mounted) {
@@ -127,6 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _faith = results[7];
         _topRated = results[8];
         _animation = results[9];
+        _publicDomain = results[10];
 
         // Curate hero banner from top distinct items
         _heroMovies = [
@@ -273,6 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 10. Animation & Anime Masterworks
                   _buildSectionHeader('Animation & Anime', query: 'Animation'),
                   _buildMovieRow(_animation, 'Animation & Anime'),
+
+                  // 11. Available Movies (100% Streamable Vault)
+                  if (_publicDomain.isNotEmpty) ...[
+                    _buildSectionHeader('Available Movies (100% Streamable Vault)', query: 'Public Domain'),
+                    _buildMovieRow(_publicDomain, 'Available Movies (100% Streamable Vault)'),
+                  ],
 
                   // Bottom Spacing for Floating Capsule Dock Navbar
                   const SliverToBoxAdapter(

@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import '../models/live_channel.dart';
 import '../services/iptv_service.dart';
+import '../services/auth_service.dart';
+import '../widgets/subscription_modal.dart';
 import '../theme/fonts.dart';
 
 class LiveTVScreen extends StatefulWidget {
@@ -49,12 +51,18 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
   final TextEditingController _customUrlController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
+  bool _isUserSubscribed = false;
+
   @override
   void initState() {
     super.initState();
     _activeChannel = widget.initialChannel ?? IPTVService.channels.first;
     _isInitializing = widget.isActive;
     
+    AuthService.isSubscribed().then((subbed) {
+      if (mounted) setState(() => _isUserSubscribed = subbed);
+    });
+
     // Load dynamic IPTV-org channels in background
     IPTVService.loadIPTVOrgChannels(onUpdated: () {
       if (mounted) setState(() {});
@@ -1210,7 +1218,28 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (channel.badge != null)
+              if (index >= 5 && !_isUserSubscribed)
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF27272A),
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(color: const Color(0xFFEAB308).withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_rounded, color: Color(0xFFFDE047), size: 10),
+                      const SizedBox(width: 3),
+                      Text(
+                        'VIP',
+                        style: AppFonts.sCoreDream(color: const Color(0xFFFDE047), fontSize: 8.5, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                )
+              else if (channel.badge != null)
                 Container(
                   margin: const EdgeInsets.only(right: 6),
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -1238,6 +1267,19 @@ class _LiveTVScreenState extends State<LiveTVScreen> {
             ],
           ),
           onTap: () {
+            if (index >= 5 && !_isUserSubscribed) {
+              SubscriptionModal.show(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Free preview is limited to 5 channels. Subscribe (₦400/mo) for 10,000+ channels!',
+                    style: AppFonts.sCoreDream(color: Colors.white),
+                  ),
+                  backgroundColor: const Color(0xFF18181B),
+                ),
+              );
+              return;
+            }
             setState(() => _activeChannel = channel);
             _initPlayer(channel.streamUrl);
           },

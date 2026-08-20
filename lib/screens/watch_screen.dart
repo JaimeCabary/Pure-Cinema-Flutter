@@ -24,6 +24,7 @@ class _WatchScreenState extends State<WatchScreen> {
   bool _hasError = false;
   final double _volume = 1.0;
   double _playbackSpeed = 1.0;
+  String _selectedQuality = '4K Ultra HD (2160p)';
   Timer? _hideTimer;
   int _currentSourceIndex = 0;
   int _selectedEpisodeIndex = 0;
@@ -541,15 +542,18 @@ class _WatchScreenState extends State<WatchScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          '4K ULTRA HD',
-                                          style: AppFonts.sCoreDream(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
+                                      GestureDetector(
+                                        onTap: _showQualityPickerModal,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            _selectedQuality.split(' ').first.toUpperCase(),
+                                            style: AppFonts.sCoreDream(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -567,6 +571,10 @@ class _WatchScreenState extends State<WatchScreen> {
                                   ),
                                 ],
                               ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.high_quality_rounded, color: Colors.white, size: 20),
+                              onPressed: _showQualityPickerModal,
                             ),
                             IconButton(
                               icon: const Icon(Icons.speed_rounded, color: Colors.white, size: 20),

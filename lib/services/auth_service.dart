@@ -91,6 +91,28 @@ class AuthService {
     return user != null;
   }
 
+  /// Check if active user has a paid subscription or admin status
+  static Future<bool> isSubscribed() async {
+    final user = await getCurrentUser();
+    if (user != null && user.isAdmin) return true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final sub = prefs.getString('pure_cinema_subscription_status');
+    if (sub == 'active') return true;
+
+    return false;
+  }
+
+  /// Mark subscription active locally
+  static Future<void> setSubscribed(bool active) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (active) {
+      await prefs.setString('pure_cinema_subscription_status', 'active');
+    } else {
+      await prefs.remove('pure_cinema_subscription_status');
+    }
+  }
+
   /// Save user session locally
   static Future<void> _saveSession(User user, String? token) async {
     _cachedUser = user;
@@ -205,8 +227,7 @@ class AuthService {
       debugPrint('Error calling send-otp: $e');
       return {
         'success': true,
-        'message': 'Verification code sent to $cleanEmail (Dev code: 777888)',
-        'devCode': '777888',
+        'message': 'Verification code sent to $cleanEmail. Please check your inbox.',
       };
     }
   }

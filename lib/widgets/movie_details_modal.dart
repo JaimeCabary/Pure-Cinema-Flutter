@@ -5,10 +5,13 @@ import '../models/movie.dart';
 import '../models/cast_member.dart';
 import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../screens/watch_screen.dart';
 import '../theme/fonts.dart';
 import 'movie_card.dart';
 import 'youtube_trailer_view.dart';
+import 'subscription_modal.dart';
+import 'unavailable_movie_dialog.dart';
 
 class MovieDetailsModal extends StatefulWidget {
   final Movie movie;
@@ -274,7 +277,27 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
+                          if (movie.id < 900000) {
+                            if (context.mounted) {
+                              UnavailableMovieDialog.show(
+                                context,
+                                movie: movie,
+                                onSwitchToLiveTV: () {
+                                  Navigator.pop(context);
+                                },
+                              );
+                            }
+                            return;
+                          }
+                          final isSubbed = await AuthService.isSubscribed();
+                          if (!isSubbed) {
+                            if (context.mounted) {
+                              SubscriptionModal.show(context);
+                            }
+                            return;
+                          }
+                          if (!context.mounted) return;
                           Navigator.pop(context);
                           Navigator.push(
                             context,
@@ -604,7 +627,27 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            if (movie.id < 900000) {
+                              if (context.mounted) {
+                                UnavailableMovieDialog.show(
+                                  context,
+                                  movie: movie,
+                                  onSwitchToLiveTV: () {
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              }
+                              return;
+                            }
+                            final isSubbed = await AuthService.isSubscribed();
+                            if (!isSubbed) {
+                              if (context.mounted) {
+                                SubscriptionModal.show(context);
+                              }
+                              return;
+                            }
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                             Navigator.push(
                               context,

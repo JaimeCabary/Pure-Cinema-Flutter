@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.database import init_db
 from app.routers import auth, movies, watchlist, agent, iptv, payment
 
 app = FastAPI(
@@ -19,6 +20,14 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Initialize PostgreSQL / SQLite Database Tables on Startup
+@app.on_event("startup")
+def on_startup():
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Warning on startup database init: {e}")
+
 # Include Routers
 app.include_router(auth.router)
 app.include_router(movies.router)
@@ -34,5 +43,6 @@ def health_check():
         "status": "online",
         "service": "Pure Cinema FastAPI Backend",
         "adk_agent_enabled": bool(settings.GEMINI_API_KEY),
+        "database": "postgresql_or_sqlite_ready",
         "version": "1.0.0"
     }

@@ -1,4 +1,7 @@
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import httpx
 from app.config import settings
 
@@ -6,16 +9,45 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     @staticmethod
-    async def send_otp_email(to_email: str, code: str, purpose: str = "login") -> bool:
+    def _send_via_google_smtp(to_email: str, subject: str, html_content: str) -> bool:
         """
-        Sends an HTML verification OTP email using Resend REST API.
+        Sends an HTML email using Google SMTP (smtp.gmail.com:587 TLS or 465 SSL).
+        Requires Google App Password configured in SMTP_USER & SMTP_PASSWORD.
         """
-        api_key = settings.RESEND_API_KEY
-        if not api_key:
-            logger.warning("RESEND_API_KEY not configured. Skipping email dispatch.")
+        smtp_user = settings.SMTP_USER.strip() if settings.SMTP_USER else ""
+        smtp_pass = settings.SMTP_PASSWORD.replace(" ", "").strip() if settings.SMTP_PASSWORD else ""
+        if not smtp_user or not smtp_pass:
             return False
 
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"Pure Cinema Security <{smtp_user}>"
+            msg["To"] = to_email
+
+            part = MIMEText(html_content, "html")
+            msg.attach(part)
+
+            server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [to_email], msg.as_string())
+            server.quit()
+            logger.info(f"Successfully dispatched OTP via Google SMTP to {to_email}")
+            return True
+        except Exception as e:
+            logger.error(f"Google SMTP dispatch error: {e}")
+            return False
+
+    @staticmethod
+    async def send_otp_email(to_email: str, code: str, purpose: str = "login") -> bool:
+        """
+        Sends an HTML verification OTP email using Google SMTP or Resend API fallback.
+        """
         purpose_label = "Account Verification" if purpose == "register" else ("Password Reset" if purpose == "reset_password" else "Security Sign In")
+        subject = f"Your Pure Cinema Security Code: {code}"
         
         html_body = f"""
         <!DOCTYPE html>
@@ -112,27 +144,33 @@ class EmailService:
         </html>
         """
 
-        payload = {
-            "from": settings.RESEND_FROM_EMAIL,
-            "to": [to_email],
-            "subject": f"Your Pure Cinema Verification Code: {code}",
-            "html": html_body,
-        }
+        # 1. Attempt Google SMTP first
+        if settings.SMTP_USER and settings.SMTP_PASSWORD:
+            smtp_success = EmailService._send_via_google_smtp(to_email, subject, html_body)
+            if smtp_success:
+                return True
 
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+        # 2. Fallback to Resend API
+        api_key = settings.RESEND_API_KEY
+        if api_key:
+            payload = {
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+            }
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    res = await client.post("https://api.resend.com/emails", headers=headers, json=payload)
+                    if res.status_code in [200, 201]:
+                        logger.info(f"Dispatched via Resend API to {to_email}")
+                        return True
+            except Exception as e:
+                logger.error(f"Resend error: {e}")
 
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                res = await client.post("https://api.resend.com/emails", headers=headers, json=payload)
-                if res.status_code in [200, 201]:
-                    logger.info(f"Successfully dispatched OTP email to {to_email} via Resend. ID: {res.json().get('id')}")
-                    return True
-                else:
-                    logger.error(f"Resend error: {res.status_code} - {res.text}")
-                    return False
-        except Exception as e:
-            logger.error(f"Failed to send email via Resend: {e}")
-            return False
+        logger.info(f"[DEV DISPATCH] Code for {to_email}: {code}")
+        return False

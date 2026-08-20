@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/sound_service.dart';
 import '../models/user.dart';
 import '../theme/fonts.dart';
+import 'cinema_logo.dart';
 
 class SubscriptionModal extends StatefulWidget {
   final VoidCallback? onCompleted;
@@ -100,6 +101,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     if (!mounted) return;
 
     SoundService.playMoneySuccessSound();
+    await AuthService.setSubscribed(true);
 
     setState(() {
       _isLoading = false;
@@ -170,6 +172,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       if (!mounted) return;
 
       SoundService.playMoneySuccessSound();
+      await AuthService.setSubscribed(true);
 
       setState(() {
         _isLoading = false;
@@ -244,25 +247,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF18181B),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  blurRadius: 12,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 20),
-                            ),
-                          ),
+                          const CinemaLogoWidget(size: 34, animate: true),
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

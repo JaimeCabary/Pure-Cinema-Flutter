@@ -8,7 +8,9 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.19+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Paystack](https://img.shields.io/badge/Paystack-Production-09A5DB?style=for-the-badge&logo=paystack&logoColor=white)](https://paystack.com)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI%20Swarm-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com)
 [![License](https://img.shields.io/badge/License-MIT-white?style=for-the-badge)](LICENSE)
 
@@ -21,19 +23,15 @@
 - [Overview](#-overview)
 - [Design Philosophy](#-design-philosophy)
 - [Comprehensive Feature Suite](#-comprehensive-feature-suite)
-  - [1. 4K Cinema Streaming & Player](#1-4k-cinema-streaming--player)
-  - [2. 10,000+ Worldwide Live TV](#2-10000-worldwide-live-tv)
+  - [1. 4K Cinema Streaming, Video Quality & Data Saver](#1-4k-cinema-streaming-video-quality--data-saver)
+  - [2. 10,000+ Worldwide Live TV & 5-Channel Free Preview](#2-10000-worldwide-live-tv--5-channel-free-preview)
   - [3. AI CineBot Concierge](#3-ai-cinebot-concierge)
-  - [4. Authentication & Passwordless OTP System](#4-authentication--passwordless-otp-system)
-  - [5. VIP Memberships & Paystack Gateway](#5-vip-memberships--paystack-gateway)
-  - [6. Local-First Sync & SQLite Persistence](#6-local-first-sync--sqlite-persistence)
+  - [4. PostgreSQL ORM, Hashed Security & Google SMTP OTP](#4-postgresql-orm-hashed-security--google-smtp-otp)
+  - [5. 4 Tier VIP Memberships & Paystack Integration](#5-4-tier-vip-memberships--paystack-integration)
+  - [6. Public Domain & Open Source Cinema Vault](#6-public-domain--open-source-cinema-vault)
+  - [7. Multi-Worker Server Fault Tolerance](#7-multi-worker-server-fault-tolerance)
 - [System Architecture](#-system-architecture)
 - [Architecture & Sequence Diagrams](#-architecture--sequence-diagrams)
-  - [System Layer Diagram](#system-layer-diagram)
-  - [Use Case Diagram](#use-case-diagram)
-  - [Entity-Relationship Diagram (ERD)](#entity-relationship-diagram-erd)
-  - [Authentication & VIP Paywall Sequence](#authentication--vip-paywall-sequence)
-  - [AI CineBot Model Rotator Flow](#ai-cinebot-model-rotator-flow)
 - [API Reference](#-api-reference)
 - [Quick Start Guide](#-quick-start-guide)
 - [Environment Configuration](#-environment-configuration)
@@ -45,9 +43,9 @@
 
 ## 🌟 Overview
 
-**Pure Cinema** is an enterprise-grade, cross-platform media streaming application engineered with **Flutter** (Web, iOS, Android, macOS, Windows, Linux) and powered by a asynchronous **FastAPI** backend microservice.
+**Pure Cinema** is an enterprise-grade, cross-platform media streaming application engineered with **Flutter** (Web, iOS, Android, macOS, Windows, Linux) and powered by a high-concurrency **FastAPI** backend microservice backed by **PostgreSQL ORM** and **Paystack** payments.
 
-Built from the ground up for movie aficionados and cinephiles, Pure Cinema unifies curated 4K cinema catalogs, TMDB-backed metadata, YouTube trailer embeds, resilient global IPTV streaming, conversational AI assistant intelligence via Google Gemini, and secure Paystack monetization in one cohesive experience.
+Built from the ground up for movie aficionados and cinephiles, Pure Cinema unifies curated 4K cinema catalogs, TMDB-backed metadata, public domain films (Internet Archive & WikiFlix), YouTube trailer embeds, resilient global IPTV streaming, conversational AI assistant intelligence via Google Gemini, Google SMTP transactional email authentication, and secure Paystack monetization in one cohesive experience.
 
 ---
 
@@ -63,26 +61,27 @@ Pure Cinema is designed around an **OLED Obsidian Monochrome Aesthetic**:
 
 ## ✨ Comprehensive Feature Suite
 
-### 1. 4K Cinema Streaming & Player
+### 1. 4K Cinema Streaming, Video Quality & Data Saver
 * **Smart Stream Matching Engine**: Automatic playback resolution failover with support for MP4, HLS (.m3u8), and adaptive bitrates.
+* **Video Quality Selector & Bandwidth Saver**:
+  - `4K Ultra HD (2160p)`: Master Studio Bitrate (Highest Quality).
+  - `1080p Full HD`: Standard High-Definition.
+  - `720p HD (Data Saver)`: 50% Mobile Data Savings.
+  - `480p SD (Mobile Saver)`: 75% Mobile Data Savings (Smooth on 3G).
+  - `360p Low Bandwidth`: Ultra-low bandwidth mode (~300MB/hr).
 * **Interactive Player HUD**:
   - Direct touch gestures (tap to toggle controls with 4-second auto-hide).
   - High-precision live DVR scrubber and timestamp tracker.
   - Quick ±10-second skip buttons, instant mute toggle, and dynamic playback speed selector (`0.75x` to `2.0x`).
-* **YouTube Official Trailers**: Integrated YouTube iframe player with responsive positioning and top-tier controls.
-* **Episodes & Chapters Drawer**: Switch seamlessly between multi-part films, episodes, and bonus features with live state indicators.
-* **Curated Metadata powered by TMDB**: Detailed synopses, release years, review scores, genre categorization, and complete cast/crew carousels.
 
 ---
 
-### 2. 10,000+ Worldwide Live TV
+### 2. 10,000+ Worldwide Live TV & 5-Channel Free Preview
 * **Global Channel Directory**: Over 10,000+ free-to-air global broadcast streams aggregated via dynamic IPTV-org sync.
-* **Multi-Tier Filtering**:
-  - **Category Tabs**: All Channels, Movies, News, Sports, Documentary, Entertainment, Music, Kids, and Animation.
-  - **Country Flag Badges**: Quick regional switching across 50+ countries (`🇺🇸 US`, `🇬🇧 UK`, `🇫🇷 FR`, `🇩🇪 DE`, `🇯🇵 JP`, etc.) with automatic ISO flag generation.
-* **Instant Client-Side Search**: Zero-latency search bar with real-time text query filtering.
+* **Free Preview & VIP Access Control**:
+  - Non-paid users get **5 free live channels** (`Pure Cinema TV 4K`, `00s Replay Cinema`, `FilmRise Free Movies`, `Bloomberg TV News`, `Red Bull TV Sports`).
+  - Channels 6+ feature a `VIP 🔒` badge and prompt the subscription modal when tapped.
 * **CORS Stream Proxy (`/stream-proxy`)**: FastAPI streaming proxy that bridges geo-restricted or CORS-blocked live feeds directly to web browsers.
-* **Orientation-Aware Mobile Layout**: Intelligent layout transitions that scale the player on keyboard open and support full immersive landscape playback.
 
 ---
 
@@ -94,51 +93,57 @@ Pure Cinema is designed around an **OLED Obsidian Monochrome Aesthetic**:
   3. `gemini-2.5-flash-lite`
   4. `gemini-1.5-flash`
   5. `gemini-1.5-flash-8b`
-* **In-App Action Dispatcher**: The AI CineBot doesn't just chat—it controls the app using structured JSON commands:
-  - `NAVIGATE_TAB`: Switch tabs autonomously (e.g. "Take me to Live TV" $\rightarrow$ Tab index `1`).
-  - `OPEN_MOVIE`: Directly launch movie details or player modals.
-* **Cold-Start Resilience**: 30-second client timeout handles free-tier cloud backend spin-ups gracefully.
+* **In-App Action Dispatcher**: The AI CineBot doesn't just chat—it controls the app using structured JSON commands (`NAVIGATE_TAB`, `OPEN_MOVIE`, `SHOW_TRAILER`).
 
 ---
 
-### 4. Authentication & Passwordless OTP System
-* **Dual Auth Strategies**:
-  - Traditional **Email & Password** authentication with bcrypt-grade security.
-  - 1-Click **Passwordless Login / Registration** via 6-digit One-Time Passwords (OTP).
-* **Automated Post-Registration Verification**: When creating a new account, a 6-digit OTP is automatically generated and dispatched to the user's inbox.
-* **Branded Email Delivery via Resend**: Beautifully styled dark-mode HTML email templates dispatched directly using the **Resend REST API**.
-* **Master Admin Privilege Layer**:
-  - Master Admin account (`shazzyazwike@gmail.com`) automatically receives permanent `ADMIN` privileges and zero-paywall VIP status across all devices.
+### 4. PostgreSQL ORM, Hashed Security & Google SMTP OTP
+* **SQLAlchemy ORM Data Persistence**:
+  - `UserModel`: Account credentials, hashed passwords, roles (`USER`/`ADMIN`), and metadata.
+  - `SubscriptionModel`: Active user subscriptions (`student_monthly`, `vip_monthly`, `ultra_quarterly`, `founder_lifetime`), start/end dates, and admin flags.
+  - `TransactionModel`: Full audit log of all Paystack transactions (`reference`, `amount`, `channel`, `gateway_response`, `raw_payload`).
+  - `WatchlistItemModel`: User saved movies and TV shows.
+* **Native `bcrypt` Password Hashing**: Zero plain-text passwords stored in the database.
+* **Google SMTP Email Dispatch (`smtp.gmail.com:587`)**:
+  - Sends cryptographically random 6-digit OTP verification codes directly to the user's inbox using Gmail App Passwords.
+  - Automatic fallback to Resend API (`RESEND_API_KEY`) if Google SMTP is unconfigured.
+* **Institutional Student Email Auto-Verification**:
+  - Recognizes `.edu`, `.edu.ng`, `.ac.uk`, `.sch.ng`, `.edu.gh`, `.edu.za`, `.stu.` domains for student verification.
 
 ---
 
-### 5. VIP Memberships & Paystack Gateway
-* **Tiered Subscription Plans**:
-  - **Pure Cinema VIP Pass (Monthly)**: ₦2,500 – Full 4K HDR access + 10,000+ Live Channels + AI CineBot.
-  - **Cinema Ultra Pass (3 Months)**: ₦6,500 – Multi-device 4-screen sync + Priority IPTV transcoding.
-  - **Founder Lifetime Pass**: ₦25,000 – Permanent VIP access + Founder Gold Badge + Direct Studio Bitrate.
-* **Paystack Payment Integration (Live & Test Modes)**:
-  - Supports live and sandbox card, bank transfer, and USSD payments via Paystack API.
-  - Works with Paystack Test Keys (`sk_test_...` / `pk_test_...`) for zero-cost sandbox checkout validation with official test cards.
-  - Opens direct Paystack 256-Bit SSL checkout window with automated verification callback.
-* **👑 Master Admin Zero-Paywall Bypass**:
-  - Administrator accounts (`role == 'ADMIN'` or admin emails like Shalom/Shazzy) automatically bypass payment requirements.
-  - 1-click instant lifetime VIP pass activation without being charged.
-* **Post-Verification Paywall Enforcement**: Standard users are seamlessly guided to the VIP subscription checkout modal upon registration and login.
+### 5. 4 Tier VIP Memberships & Paystack Integration
+* **4 Tier Subscription Categories**:
+  - 🎓 **Student Cinema Pass**: **₦400 / Month** *(1080p FHD, 1 Screen, AI CineBot)* - *Cheapest Category*
+  - 👑 **Pure Cinema VIP Pass**: **₦2,500 / Month** *(4K HDR 60 FPS, Spatial Audio)*
+  - 🚀 **Cinema Ultra Pass**: **₦6,500 / 3 Months** *(4 Screens / Family Sharing)*
+  - 💎 **Founder Lifetime Pass**: **₦25,000 / Lifetime** *(VIP Gold Badge, Direct Studio Bitrate)*
+* **Production Paystack Gateway**:
+  - `POST /api/payment/initialize`: Initializes Paystack transaction & logs pending attempt in PostgreSQL.
+  - `GET /api/payment/verify/{ref}`: Queries Paystack verification API & activates user subscription in PostgreSQL.
+  - `POST /api/payment/webhook`: Asynchronous webhook listener with **HMAC SHA512 signature validation** (`x-paystack-signature`).
+  - 👑 **Master Admin Zero-Paywall Bypass**: 1-click instant lifetime VIP pass activation for master admin accounts.
 
 ---
 
-### 6. Local-First Sync & SQLite Persistence
-* **Instant Resumption**: Local database cache stores watch history, video playback positions (seconds), and custom watchlists with 0ms read latency.
-* **Cloud Sync**: Automatically synchronizes watchlist items and progress to the FastAPI backend whenever network connectivity is restored.
+### 6. Public Domain & Open Source Cinema Vault
+* **Legal Public Domain Catalog Integration**:
+  - Server-side integration with **Internet Archive API** (`archive.org`), **WikiFlix**, **Wikimedia Commons**, and **Prelinger Archives**.
+  - Modern open-source cinema masterpieces (*Big Buck Bunny*, *Tears of Steel*, *Sintel*, *Night of the Living Dead*, *Charade*, *The General*).
+  - Endpoint `GET /api/movies/archive-search?query=...` queries tens of thousands of free public-domain titles dynamically.
+
+---
+
+### 7. Multi-Worker Server Fault Tolerance
+* **Process Clustering**: Production runner uses Uvicorn worker clustering (`uvicorn app.main:app --workers 4`).
+* **Instant Worker Recovery**: If a worker process crashes, Uvicorn re-spawns it in milliseconds while sister workers serve incoming traffic without dropped connections.
+* **Stateless Architecture**: Server RAM retains zero state; all user sessions and active subscriptions persist in PostgreSQL.
 
 ---
 
 ## 🏛️ System Architecture
 
-Pure Cinema operates on a **Four-Tier Distributed Architecture**:
-
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           1. CLIENT TIER                                │
 │                   Flutter (Web / iOS / Android / Desktop)               │
@@ -153,170 +158,31 @@ Pure Cinema operates on a **Four-Tier Distributed Architecture**:
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           2. BACKEND GATEWAY                            │
-│                         FastAPI (Python 3.10+)                          │
+│                 FastAPI (Python 3.10+) + SQLAlchemy ORM                 │
 │  ┌───────────────┐ ┌───────────────┐ ┌────────────────┐ ┌─────────────┐ │
 │  │ /api/auth     │ │ /api/agent    │ │ /api/iptv      │ │ /api/payment│ │
-│  │ JWT & OTP     │ │ Gemini Swarm  │ │ Stream Proxy   │ │ Paystack    │ │
+│  │ bcrypt & OTP  │ │ Gemini Swarm  │ │ Stream Proxy   │ │ Paystack    │ │
 │  └───────────────┘ └───────────────┘ └────────────────┘ └─────────────┘ │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │ Async Connectors
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        3. EXTERNAL INTEGRATIONS                         │
-│  ┌───────────────────────┐ ┌───────────────────┐ ┌───────────────────┐  │
-│  │   Google Gemini API   │ │   TMDB v3 API     │ │    Resend API     │  │
-│  │   Cognitive AI Swarm  │ │   Metadata Engine │ │    Transactional  │  │
-│  └───────────────────────┘ └───────────────────┘ └───────────────────┘  │
-│  ┌───────────────────────┐ ┌───────────────────┐                        │
-│  │   Paystack Gateway    │ │   IPTV-Org M3U8   │                        │
-│  │   Payment Processor   │ │   Global Channels │                        │
-│  └───────────────────────┘ └───────────────────┘                        │
-└─────────────────────────────────────────────────────────────────────────┘
+└───────────────────┬─────────────────────────────────┬───────────────────┘
+                    │                                 │
+                    ▼                                 ▼
+┌──────────────────────────────────────┐ ┌────────────────────────────────┐
+│      3. DATABASE PERSISTENCE         │ │    4. EXTERNAL INTEGRATIONS    │
+│  ┌────────────────────────────────┐  │ │  ┌──────────────────────────┐  │
+│  │   PostgreSQL (Supabase/Cloud)  │  │ │  │   Google Gemini API      │  │
+│  │   Users, Subs, Transactions    │  │ │  │   TMDB v3 API            │  │
+│  └────────────────────────────────┘  │ │  │   Google SMTP (Gmail)    │  │
+│  ┌────────────────────────────────┐  │ │  │   Paystack Gateway       │  │
+│  │   SQLite Fallback Engine       │  │ │  │   Internet Archive API   │  │
+│  └────────────────────────────────┘  │ │  └──────────────────────────┘  │
+└──────────────────────────────────────┘ └────────────────────────────────┘
 ```
 
 ---
 
 ## 📐 Architecture & Sequence Diagrams
 
-### System Layer Diagram
-
-```mermaid
-graph TD
-    subgraph Client ["📱 Flutter Multiplatform Client"]
-        UI["UI Components & OLED Screens"]
-        State["Stateful & Reactive Stores"]
-        LocalDB[("Local SQLite Database")]
-        UI --> State
-        State --> LocalDB
-    end
-
-    subgraph Gateway ["⚡ FastAPI Backend Layer"]
-        Router["API Gateway & Routers"]
-        AuthSvc["Auth & OTP Engine"]
-        AgentSvc["AI Swarm Controller"]
-        ProxySvc["Live Stream Proxy"]
-        PaymentSvc["Payment Processor"]
-        Router --> AuthSvc
-        Router --> AgentSvc
-        Router --> ProxySvc
-        Router --> PaymentSvc
-    end
-
-    subgraph Cloud ["☁️ Cloud Services"]
-        Gemini["Google Gemini LLMs"]
-        TMDB["The Movie Database (TMDB)"]
-        Resend["Resend Email API"]
-        Paystack["Paystack Gateway"]
-        IPTV["IPTV-Org Streams"]
-    end
-
-    Client -->|REST Requests| Router
-    AgentSvc --> Gemini
-    Router --> TMDB
-    AuthSvc --> Resend
-    PaymentSvc --> Paystack
-    ProxySvc --> IPTV
-```
-
----
-
-### Use Case Diagram
-
-```mermaid
-graph LR
-    actorGuest(("👤 Guest User"))
-    actorMember(("⭐ VIP Member"))
-    actorAdmin(("👑 Master Admin<br/>(shazzyazwike@gmail.com)"))
-
-    subgraph PureCinemaSystem ["🎬 Pure Cinema Capabilities"]
-        UC1(["Browse 4K Cinema & Trending Feeds"])
-        UC2(["Watch Movies & YouTube Trailers"])
-        UC3(["Stream 10,000+ Live TV Channels"])
-        UC4(["Chat with AI CineBot Concierge"])
-        UC5(["Sign In / Passwordless OTP"])
-        UC6(["Upgrade to VIP Pass via Paystack"])
-        UC7(["Personal Watchlist Sync"])
-        UC8(["Master Admin VIP Bypass"])
-    end
-
-    actorGuest --> UC1
-    actorGuest --> UC2
-    actorGuest --> UC3
-    actorGuest --> UC4
-    actorGuest --> UC5
-
-    actorMember --> UC1
-    actorMember --> UC2
-    actorMember --> UC3
-    actorMember --> UC4
-    actorMember --> UC6
-    actorMember --> UC7
-
-    actorAdmin --> UC1
-    actorAdmin --> UC3
-    actorAdmin --> UC4
-    actorAdmin --> UC8
-```
-
----
-
-### Entity-Relationship Diagram (ERD)
-
-```mermaid
-erDiagram
-    USERS ||--o{ WATCH_HISTORY : "tracks"
-    USERS ||--o{ WATCHLIST : "curates"
-    USERS ||--o| SUBSCRIPTIONS : "maintains"
-    MOVIES ||--o{ WATCH_HISTORY : "referenced in"
-    MOVIES ||--o{ WATCHLIST : "saved in"
-
-    USERS {
-        string id PK
-        string email UK
-        string name
-        string role "USER | ADMIN"
-        boolean is_vip
-        timestamp created_at
-    }
-
-    MOVIES {
-        int id PK
-        string title
-        string overview
-        string poster_path
-        string backdrop_path
-        float vote_average
-        string release_date
-    }
-
-    WATCH_HISTORY {
-        string id PK
-        string user_id FK
-        int movie_id FK
-        int position_seconds
-        int duration_seconds
-        timestamp updated_at
-    }
-
-    WATCHLIST {
-        string user_id FK
-        int movie_id FK
-        timestamp added_at
-    }
-
-    SUBSCRIPTIONS {
-        string id PK
-        string user_id FK
-        string plan_tier
-        string status "ACTIVE | EXPIRED"
-        string payment_ref
-        timestamp expires_at
-    }
-```
-
----
-
-### Authentication & VIP Paywall Sequence
+### Authentication & Paystack Subscription Sequence
 
 ```mermaid
 sequenceDiagram
@@ -324,58 +190,36 @@ sequenceDiagram
     actor User as User
     participant App as Flutter App
     participant API as FastAPI Backend
-    participant Resend as Resend Email Service
+    participant DB as PostgreSQL Database
+    participant SMTP as Google SMTP / Gmail
     participant Paystack as Paystack Gateway
 
-    User->>App: Submits Registration (Name, Email, Password)
-    App->>API: POST /api/auth/mobile/register
-    API->>API: Creates Account Record
-    API->>Resend: POST /emails (Dispatches 6-Digit OTP)
-    Resend-->>User: Delivers Branded OTP Email to Inbox
+    User->>App: Enters Email & Requests Security OTP
+    App->>API: POST /api/auth/send-otp
+    API->>API: Generates 6-Digit Cryptographic Code
+    API->>SMTP: Dispatches HTML OTP Email (smtp.gmail.com:587)
+    SMTP-->>User: Delivers OTP Code to Inbox
     API-->>App: { success: true, message: "Code sent" }
-    App->>User: Switches to OTP Verification UI
-    User->>App: Enters 6-digit OTP
+    User->>App: Enters 6-digit OTP Code
     App->>API: POST /api/auth/verify-otp { email, code }
-    API->>API: Validates OTP & Generates JWT
+    API->>DB: Validates Code & Fetches/Creates User
     API-->>App: { success: true, user: { role: "USER" }, token: "JWT..." }
 
-    alt User is Master Admin (shazzyazwike@gmail.com)
-        App->>App: Bypass Paywall -> Direct VIP Entry
-    else Regular User
-        App->>User: Displays Subscription Checkout Modal
-        User->>App: Selects Plan & Authorizes Paystack
-        App->>Paystack: Initiates Checkout
-        Paystack-->>App: { status: "success", reference: "REF_123" }
-        App->>API: POST /api/payment/verify { reference }
-        API-->>App: { is_vip: true }
-        App->>App: Unlocks VIP Access & Enters App
+    alt User selects Student Pass (₦400/mo) or VIP Pass (₦2,500/mo)
+        User->>App: Selects Subscription Plan
+        App->>API: POST /api/payment/initialize { email, amount, plan }
+        API->>DB: Logs Pending Transaction Record
+        API->>Paystack: POST /transaction/initialize
+        Paystack-->>API: { authorization_url, reference }
+        API-->>App: Returns Checkout Session
+        App->>User: Opens Paystack 256-Bit SSL Checkout
+        User->>Paystack: Completes Payment
+        Paystack->>API: POST /api/payment/webhook (HMAC SHA512 Signature)
+        API->>DB: Updates Transaction to SUCCESS & Activates Subscription
+        App->>API: GET /api/payment/verify/{reference}
+        API-->>App: { status: "success", plan: "student_monthly" }
+        App->>App: Unlocks 4K Cinema & 10,000+ Channels
     end
-```
-
----
-
-### AI CineBot Model Rotator Flow
-
-```mermaid
-flowchart TD
-    Start(["User submits message in CineBot"]) --> PreHook{"Is Navigation Intent?<br/>(e.g., 'Watchlist', 'Live TV')"}
-    PreHook -- Yes --> NavAction["Dispatch In-App Action & Return Instant Reply"]
-    PreHook -- No --> CheckKey{"Backend GEMINI_API_KEY Configured?"}
-
-    CheckKey -- Yes --> TryModel1["Try gemini-3.6-flash"]
-    TryModel1 -- 200 OK --> Success["Return AI Film Analysis & Action Suggestions"]
-    TryModel1 -- Rate Limit / Error --> TryModel2["Try gemini-2.5-flash"]
-    TryModel2 -- 200 OK --> Success
-    TryModel2 -- Error --> TryModel3["Try gemini-2.5-flash-lite"]
-    TryModel3 -- 200 OK --> Success
-    TryModel3 -- Error --> TryModel4["Try gemini-1.5-flash"]
-    TryModel4 -- 200 OK --> Success
-
-    CheckKey -- No --> SearchTMDB{"Is Explicit Movie Search?"}
-    TryModel4 -- All Exhausted --> SearchTMDB
-
-    SearchTMDB -- Yes --> QueryTMDB["Query TMDB Search API & Return Top Matches"]
-    SearchTMDB -- No --> FallbackReply["Return Cinematic Conversational Fallback"]
 ```
 
 ---
@@ -384,21 +228,23 @@ flowchart TD
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Server status and Gemini AI readiness | No |
-| `POST` | `/api/auth/mobile/login` | Authenticate with email & password | No |
-| `POST` | `/api/auth/mobile/register` | Create account & trigger verification OTP | No |
-| `POST` | `/api/auth/send-otp` | Generate & email 6-digit OTP code | No |
-| `POST` | `/api/auth/verify-otp` | Verify 6-digit code and issue JWT | No |
-| `POST` | `/api/auth/reset-password` | Reset password using verified code | No |
+| `GET` | `/health` | Server health, Gemini AI readiness, and DB status | No |
+| `POST` | `/api/auth/mobile/login` | Authenticate with email & bcrypt password | No |
+| `POST` | `/api/auth/mobile/register` | Create account with hashed password | No |
+| `POST` | `/api/auth/send-otp` | Generate & send random 6-digit OTP via Google SMTP | No |
+| `POST` | `/api/auth/verify-otp` | Verify 6-digit code and issue JWT token | No |
+| `GET` | `/api/auth/me` | Fetch active user profile and subscription state | Bearer JWT |
 | `POST` | `/api/agent/chat` | Chat with Google Gemini AI CineBot | No |
 | `GET` | `/api/iptv/channels` | Retrieve categorized live TV channels | No |
 | `GET` | `/stream-proxy` | CORS bypass proxy for live HLS streams | No |
-| `GET` | `/api/payment/plans` | Retrieve Paystack membership plans | No |
-| `POST` | `/api/payment/initialize` | Initialize Paystack transaction & get checkout URL | No |
-| `GET` | `/api/payment/verify/{ref}` | Verify Paystack transaction reference | Yes |
-| `POST` | `/api/payment/admin-bypass` | Master Admin zero-paywall VIP pass activation | Admin Only |
-| `POST` | `/api/payment/webhook` | Asynchronous Paystack charge status listener | Paystack |
+| `GET` | `/api/payment/plans` | Retrieve Paystack membership plans (4 Tiers) | No |
+| `POST` | `/api/payment/initialize` | Initialize Paystack transaction & log attempt in DB | No |
+| `GET` | `/api/payment/verify/{ref}` | Verify Paystack reference & activate DB subscription | No |
+| `POST` | `/api/payment/admin-bypass` | Master Admin zero-paywall VIP pass activation | Admin / Key |
+| `POST` | `/api/payment/webhook` | Paystack webhook with HMAC SHA512 signature check | Paystack |
 | `GET` | `/api/movies/trending` | Fetch trending cinema titles from TMDB | No |
+| `GET` | `/api/movies/public-domain` | Curated Internet Archive & Blender open movies | No |
+| `GET` | `/api/movies/archive-search` | Live search into Internet Archive database | No |
 
 ---
 
@@ -458,28 +304,31 @@ flutter run -d android
 
 ## 🔑 Environment Configuration
 
-Create a `.env` file in the `backend/` directory (refer to [`backend/.env.example`](backend/.env.example)):
+Create a `.env` file in the `backend/` directory:
 
 ```env
 PORT=3000
 HOST=0.0.0.0
 
-# TMDB API (Required for Movie Data & Posters)
-TMDB_API_KEY=your_tmdb_api_key_here
+# 1. Database (PostgreSQL Cloud Connection String)
+DATABASE_URL=postgresql://postgres:QC/mk_UA-mM5*i_@db.vponyrvkxjwdcwnlydjt.supabase.co:5432/postgres
 
-# Google Gemini API (Required for AI CineBot)
+# 2. Paystack Gateway Keys (From https://dashboard.paystack.com/#/settings/developer)
+PAYSTACK_SECRET_KEY=sk_test_e3306ac67f0ec694feaf5e761522a022b47b51a7
+PAYSTACK_PUBLIC_KEY=pk_test_2ca7c8cf267cedee27e66b09fcff63bba51f049c
+
+# 3. Google SMTP for OTP Emails (Google Account -> Security -> App Passwords)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_google_app_password
+
+# 4. Security & JWT Token Signing
+JWT_SECRET=your_jwt_secret_key_here
+
+# 5. External APIs
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Resend API (Required for Transactional OTP Emails)
-RESEND_API_KEY=your_resend_api_key_here
-RESEND_FROM_EMAIL=onboarding@resend.dev
-
-# Paystack API (Optional - Defaults to Test Mode if empty)
-PAYSTACK_SECRET_KEY=sk_test_...
-PAYSTACK_PUBLIC_KEY=pk_test_...
-
-# JWT Token Secret
-JWT_SECRET=your_super_secret_jwt_signing_key
+TMDB_API_KEY=your_tmdb_api_key_here
 ```
 
 ---
@@ -492,42 +341,15 @@ This repository includes a pre-configured [`render.yaml`](render.yaml) Blueprint
 
 1. Go to [dashboard.render.com](https://dashboard.render.com/) $\rightarrow$ **New +** $\rightarrow$ **Blueprint**.
 2. Connect `JaimeCabary/Pure-Cinema-Flutter`.
-3. Render automatically provisions the Python 3.10 FastAPI service with native health check tracking.
+3. Render automatically provisions the Python 3.10 FastAPI service with 4 worker process clustering (`--workers 4`) and health tracking.
 4. Set your environment variables in the Render Dashboard (**Environment** tab).
 
-### Frontend Web Hosting (Render / Vercel / Netlify)
+### Frontend Web Hosting
 1. Build production web bundle:
    ```bash
    flutter build web --release
    ```
-2. Deploy the generated `build/web` folder to any static hosting provider.
-
----
-
-## 📁 Project Directory Structure
-
-```text
-Pure-Cinema-Flutter/
-├── lib/                               # Flutter Frontend Codebase
-│   ├── models/                        # LiveChannel, Movie, CastMember models
-│   ├── screens/                       # MainNav, Home, LiveTV, Watch, Search, Auth
-│   ├── services/                      # TMDB, IPTV, Agent, Payment, Database
-│   ├── theme/                         # S-Core Dream typography & OLED palette
-│   └── widgets/                       # MovieCards, Modals, Subscription, CinemaLogo
-├── backend/                           # FastAPI Backend Service
-│   ├── app/
-│   │   ├── models/                    # Pydantic schemas & request validation
-│   │   ├── routers/                   # Endpoints (/auth, /agent, /iptv, /payment)
-│   │   ├── services/                  # Gemini Rotator, Resend Email, IPTV Proxy
-│   │   ├── config.py                  # Settings & environment parser
-│   │   └── main.py                    # FastAPI entrypoint & CORS configuration
-│   ├── pyproject.toml                 # Backend package specification
-│   ├── requirements.txt               # PIP dependencies
-│   └── run.py                         # Production server runner
-├── web/                               # Web runner, manifest.json & splash configs
-├── render.yaml                        # 1-Click Render Blueprint infrastructure spec
-└── README.md                          # Comprehensive documentation
-```
+2. Deploy the generated `build/web` folder to any static hosting provider (Render, Vercel, Netlify).
 
 ---
 

@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 class SubscriptionPlan {
   final String id;
   final String name;
-  final int price; // in Naira (e.g. 2500)
+  final int price; // in Naira (e.g. 1200, 2500)
   final String currency;
   final String period;
   final List<String> features;
@@ -24,9 +24,9 @@ class SubscriptionPlan {
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
     return SubscriptionPlan(
-      id: json['id'] as String? ?? 'vip_monthly',
-      name: json['name'] as String? ?? 'VIP Pass',
-      price: (json['price'] as num?)?.toInt() ?? 2500,
+      id: json['id'] as String? ?? 'student_monthly',
+      name: json['name'] as String? ?? 'Student Cinema Pass',
+      price: (json['price'] as num?)?.toInt() ?? 400,
       currency: json['currency'] as String? ?? 'NGN',
       period: json['period'] as String? ?? 'Monthly',
       features: (json['features'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
@@ -55,8 +55,23 @@ class PaymentService {
     return 'http://localhost:3000/api/payment';
   }
 
-  // Fallback / Default VIP plans
+  // 4 Subscription Plans (including Student tier @ ₦1,200)
   static const List<SubscriptionPlan> defaultPlans = [
+    SubscriptionPlan(
+      id: 'student_monthly',
+      name: 'Student Cinema Pass',
+      price: 400,
+      currency: 'NGN',
+      period: 'Monthly',
+      features: [
+        '1080p Full HD Streaming Quality',
+        'Full Access to 10,000+ Movies & TV Shows',
+        '1 Screen Concurrent Viewing',
+        'AI CineBot Personal Movie Assistant',
+        'Cheapest Tier for Verified Students',
+      ],
+      badge: 'STUDENT SPECIAL',
+    ),
     SubscriptionPlan(
       id: 'vip_monthly',
       name: 'Pure Cinema VIP Pass',
@@ -110,7 +125,9 @@ class PaymentService {
         if (resp.statusCode == 200) {
           final data = jsonDecode(resp.body);
           final list = data['plans'] as List<dynamic>? ?? [];
-          return list.map((p) => SubscriptionPlan.fromJson(p)).toList();
+          if (list.isNotEmpty) {
+            return list.map((p) => SubscriptionPlan.fromJson(p)).toList();
+          }
         }
       } catch (_) {}
     }
@@ -121,7 +138,7 @@ class PaymentService {
   static Future<Map<String, dynamic>> initializePayment({
     required String email,
     required int amountInNaira,
-    String planId = 'vip_monthly',
+    String planId = 'student_monthly',
     bool useMock = false,
   }) async {
     final amountInKobo = amountInNaira * 100;
@@ -237,4 +254,3 @@ class PaymentService {
     return false;
   }
 }
-

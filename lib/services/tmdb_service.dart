@@ -467,4 +467,54 @@ class TMDBService {
 
     return null;
   }
+
+  /// Fetch Public Domain Vault Movies (Internet Archive, WikiFlix, Prelinger Archives & Blender Open Movies)
+  static Future<List<Movie>> fetchPublicDomainMovies() async {
+    try {
+      final res = await http.get(Uri.parse('$_backendUrl/public-domain')).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final list = json.decode(res.body) as List<dynamic>;
+        return list.map((m) => Movie.fromJson(m as Map<String, dynamic>)).toList();
+      }
+    } catch (_) {}
+
+    return const [
+      Movie(
+        id: 900001,
+        title: 'Big Buck Bunny (Blender Open Movie)',
+        overview: 'A large and lovable rabbit deals with bullying forest creatures in this iconic open-source 4K animation masterpiece.',
+        posterPath: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_buck_bunny_poster_big.bip.png',
+        backdropPath: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_buck_bunny_poster_big.bip.png',
+        releaseDate: '2008-04-10',
+        voteAverage: 8.5,
+      ),
+      Movie(
+        id: 900002,
+        title: 'Tears of Steel (Blender Sci-Fi Open Film)',
+        overview: 'Set in a dystopian future Rotterdam, a group of warriors and scientists attempt to save the world from robotic destruction.',
+        posterPath: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Tears_of_Steel_poster.jpg',
+        backdropPath: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Tears_of_Steel_poster.jpg',
+        releaseDate: '2012-09-26',
+        voteAverage: 8.1,
+      ),
+      Movie(
+        id: 900003,
+        title: 'Sintel (Blender Fantasy Open Film)',
+        overview: 'A lonely young woman named Sintel searches the world for her stolen dragon companion Scales.',
+        posterPath: 'https://upload.wikimedia.org/wikipedia/commons/5/52/Sintel_poster.jpg',
+        backdropPath: 'https://upload.wikimedia.org/wikipedia/commons/5/52/Sintel_poster.jpg',
+        releaseDate: '2010-09-27',
+        voteAverage: 8.2,
+      ),
+      Movie(
+        id: 900004,
+        title: 'Night of the Living Dead (1968)',
+        overview: 'George A. Romero\'s seminal public domain horror classic that birthed the modern zombie genre.',
+        posterPath: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Night_of_the_Living_Dead_%281968%29_poster.jpg',
+        backdropPath: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Night_of_the_Living_Dead_%281968%29_poster.jpg',
+        releaseDate: '1968-10-01',
+        voteAverage: 8.0,
+      ),
+    ];
+  }
 }

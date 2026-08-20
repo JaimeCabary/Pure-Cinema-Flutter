@@ -1,11 +1,18 @@
 import os
 import uuid
 import time
+import hmac
+import hashlib
+import json
+import datetime
 import httpx
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from sqlalchemy.orm import Session
+
 from app.config import settings
+from app.database import get_db, TransactionModel, SubscriptionModel, UserModel
 
 router = APIRouter(prefix="/api/payment", tags=["Payment"])
 
@@ -15,10 +22,16 @@ def get_secret_key() -> str:
 def get_public_key() -> str:
     return os.getenv("PAYSTACK_PUBLIC_KEY") or settings.PAYSTACK_PUBLIC_KEY or "pk_test_mock_pure_cinema_public_key"
 
+ADMIN_EMAILS = {"shazzyazwike@gmail.com", "admin@purecinema.app", "shalom@purecinema.app", "shalom@purecinema.internal"}
+
+def is_admin_email(email: str) -> bool:
+    email_clean = email.strip().lower()
+    return email_clean in ADMIN_EMAILS or "shazzy" in email_clean or "shalom" in email_clean
+
 class InitializePaymentRequest(BaseModel):
     email: str
-    amount: int  # in Kobo (e.g. 250000 = N2,500.00) or USD cents
-    plan: Optional[str] = "vip_monthly"
+    amount: int  # in Kobo (e.g. 120000 = N1,200.00, 250000 = N2,500.00)
+    plan: Optional[str] = "student_monthly"
     currency: Optional[str] = "NGN"
     mock: Optional[bool] = False
 
@@ -31,19 +44,25 @@ class AdminBypassRequest(BaseModel):
     plan: Optional[str] = "founder_lifetime"
     admin_key: Optional[str] = None
 
-# In-memory store for transactions & bypasses
-active_transactions: Dict[str, Dict[str, Any]] = {}
-
-ADMIN_EMAILS = {"shazzyazwike@gmail.com", "admin@purecinema.app", "shalom@purecinema.app"}
-
-def is_admin_email(email: str) -> bool:
-    email_clean = email.strip().lower()
-    return email_clean in ADMIN_EMAILS or "shazzy" in email_clean or "shalom" in email_clean
-
 @router.get("/plans")
 def get_plans():
     return {
         "plans": [
+            {
+                "id": "student_monthly",
+                "name": "Student Cinema Pass",
+                "price": 400,
+                "currency": "NGN",
+                "period": "Monthly",
+                "features": [
+                    "1080p Full HD Streaming Quality",
+                    "Full Access to 10,000+ Movies & TV Shows",
+                    "1 Screen Concurrent Viewing",
+                    "AI CineBot Personal Movie Assistant",
+                    "Cheapest Tier for Verified Students"
+                ],
+                "badge": "STUDENT SPECIAL"
+            },
             {
                 "id": "vip_monthly",
                 "name": "Pure Cinema VIP Pass",
@@ -90,36 +109,87 @@ def get_plans():
         ]
     }
 
-@router.post("/initialize")
-async def initialize_payment(payload: InitializePaymentRequest):
+def record_active_subscription(db: Session, email: str, plan_id: str, is_admin: bool = False):
     """
-    Initializes a Paystack transaction. If Paystack secret key is configured,
-    calls the live Paystack API and returns authorization_url.
+    Activates or renews user subscription in PostgreSQL database.
+    """
+    email_clean = email.strip().lower()
+    user = db.query(UserModel).filter(UserModel.email == email_clean).first()
+    user_id = user.id if user else None
+
+    # Calculate end date based on plan
+    now = datetime.datetime.utcnow()
+    if plan_id == "founder_lifetime" or is_admin:
+        end_date = None  # Lifetime
+    elif plan_id == "ultra_quarterly":
+        end_date = now + datetime.timedelta(days=90)
+    else:  # student_monthly or vip_monthly
+        end_date = now + datetime.timedelta(days=30)
+
+    # Deactivate existing sub
+    db.query(SubscriptionModel).filter(
+        SubscriptionModel.user_email == email_clean
+    ).update({"status": "expired"})
+
+    # Create new sub
+    sub = SubscriptionModel(
+        id=f"sub_{uuid.uuid4().hex[:12]}",
+        user_id=user_id,
+        user_email=email_clean,
+        plan_id=plan_id,
+        status="active",
+        start_date=now,
+        end_date=end_date,
+        is_admin_bypass=is_admin
+    )
+    db.add(sub)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+
+@router.post("/initialize")
+async def initialize_payment(payload: InitializePaymentRequest, db: Session = Depends(get_db)):
+    """
+    Initializes a Paystack transaction. Logs attempt to PostgreSQL.
+    Returns authorization_url and reference.
     """
     secret_key = get_secret_key()
     ref = f"pstk_{uuid.uuid4().hex[:12]}"
+    clean_email = payload.email.strip().lower()
     
-    # Check if we should use mock or if key is placeholder
     is_mock_key = not secret_key or secret_key.startswith("sk_test_mock")
-    if payload.mock or is_mock_key:
-        mock_ref = f"pstk_mock_{uuid.uuid4().hex[:12]}"
-        active_transactions[mock_ref] = {
-            "reference": mock_ref,
-            "email": payload.email,
-            "amount": payload.amount,
-            "plan": payload.plan,
-            "currency": payload.currency,
-            "status": "pending",
-            "created_at": time.time(),
-            "mock": True
-        }
+    is_mock = payload.mock or is_mock_key
+
+    user = db.query(UserModel).filter(UserModel.email == clean_email).first()
+    user_id = user.id if user else None
+
+    # Create Transaction record in PostgreSQL
+    tx_model = TransactionModel(
+        id=f"tx_{uuid.uuid4().hex[:12]}",
+        reference=ref,
+        user_id=user_id,
+        email=clean_email,
+        amount=payload.amount,
+        currency=payload.currency or "NGN",
+        plan_id=payload.plan or "student_monthly",
+        status="pending",
+        is_mock=is_mock
+    )
+    db.add(tx_model)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    if is_mock:
         return {
             "status": True,
             "message": "Mock Payment Authorization Initialized",
             "data": {
-                "authorization_url": f"https://checkout.paystack.com/mock-{mock_ref}",
+                "authorization_url": f"https://checkout.paystack.com/mock-{ref}",
                 "access_code": f"mock_acc_{uuid.uuid4().hex[:8]}",
-                "reference": mock_ref,
+                "reference": ref,
                 "mock": True
             }
         }
@@ -131,7 +201,7 @@ async def initialize_payment(payload: InitializePaymentRequest):
         "Content-Type": "application/json"
     }
     body = {
-        "email": payload.email,
+        "email": clean_email,
         "amount": payload.amount,
         "reference": ref,
         "currency": payload.currency or "NGN",
@@ -147,29 +217,11 @@ async def initialize_payment(payload: InitializePaymentRequest):
             resp = await client.post(url, json=body, headers=headers)
             data = resp.json()
             if resp.status_code == 200 and data.get("status"):
-                active_transactions[ref] = {
-                    "reference": ref,
-                    "email": payload.email,
-                    "amount": payload.amount,
-                    "plan": payload.plan,
-                    "status": "pending",
-                    "created_at": time.time(),
-                    "mock": False
-                }
                 return data
             else:
-                # If Paystack API returns an error response, fallback safely
-                active_transactions[ref] = {
-                    "reference": ref,
-                    "email": payload.email,
-                    "amount": payload.amount,
-                    "plan": payload.plan,
-                    "status": "pending",
-                    "mock": True
-                }
                 return {
                     "status": True,
-                    "message": data.get("message", "Paystack checkout initialized"),
+                    "message": data.get("message", "Paystack checkout session created"),
                     "data": {
                         "authorization_url": data.get("data", {}).get("authorization_url") or f"https://checkout.paystack.com/{ref}",
                         "reference": ref,
@@ -177,34 +229,29 @@ async def initialize_payment(payload: InitializePaymentRequest):
                     }
                 }
     except Exception as e:
-        # Fallback to simulated checkout if network is unreachable
-        mock_ref = f"pstk_fallback_{uuid.uuid4().hex[:12]}"
-        active_transactions[mock_ref] = {
-            "reference": mock_ref,
-            "email": payload.email,
-            "amount": payload.amount,
-            "plan": payload.plan,
-            "status": "pending",
-            "mock": True
-        }
         return {
             "status": True,
-            "message": f"Payment initialized: {str(e)}",
+            "message": f"Payment initialized (offline fallback): {str(e)}",
             "data": {
-                "authorization_url": f"https://checkout.paystack.com/{mock_ref}",
-                "reference": mock_ref,
+                "authorization_url": f"https://checkout.paystack.com/{ref}",
+                "reference": ref,
                 "mock": True
             }
         }
 
 @router.get("/verify/{reference}")
-async def verify_payment(reference: str):
+async def verify_payment(reference: str, db: Session = Depends(get_db)):
     """
-    Verifies a Paystack transaction reference (Live, Admin Bypass, or Mock).
+    Verifies a Paystack transaction reference and updates PostgreSQL logs & subscription.
     """
-    # 1. Check Admin Bypass Reference
-    if reference.startswith("admin_bypass_") or reference in active_transactions and active_transactions[reference].get("is_admin_bypass"):
-        tx = active_transactions.get(reference, {})
+    # 1. Admin Bypass Verification
+    if reference.startswith("admin_bypass_"):
+        tx = db.query(TransactionModel).filter(TransactionModel.reference == reference).first()
+        email = tx.email if tx else "admin@purecinema.app"
+        plan = tx.plan_id if tx else "founder_lifetime"
+
+        record_active_subscription(db, email, plan, is_admin=True)
+
         return {
             "status": True,
             "message": "Admin Zero-Paywall Bypass Verified",
@@ -216,84 +263,115 @@ async def verify_payment(reference: str):
                 "gateway_response": "Admin Bypass Granted",
                 "paid_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "channel": "admin_privilege",
-                "customer": {
-                    "email": tx.get("email", "admin@purecinema.app")
-                },
-                "plan": tx.get("plan", "founder_lifetime"),
+                "customer": {"email": email},
+                "plan": plan,
                 "is_admin": True,
                 "mock": False
             }
         }
 
-    # 2. Check Mock / Fallback Reference
-    if reference.startswith("pstk_mock_") or reference.startswith("pstk_fallback_"):
-        tx = active_transactions.get(reference, {})
-        tx["status"] = "success"
-        tx["paid_at"] = time.time()
-        
+    # 2. Mock / Fallback Reference Verification
+    tx = db.query(TransactionModel).filter(TransactionModel.reference == reference).first()
+    if reference.startswith("pstk_mock_") or reference.startswith("pstk_fallback_") or (tx and tx.is_mock):
+        if tx:
+            tx.status = "success"
+            tx.paid_at = datetime.datetime.utcnow()
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+            record_active_subscription(db, tx.email, tx.plan_id)
+
         return {
             "status": True,
-            "message": "Verification successful",
+            "message": "Verification successful (Mock)",
             "data": {
                 "reference": reference,
-                "amount": tx.get("amount", 250000),
-                "currency": tx.get("currency", "NGN"),
+                "amount": tx.amount if tx else 40000,
+                "currency": tx.currency if tx else "NGN",
                 "status": "success",
                 "gateway_response": "Approved",
                 "paid_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "channel": "card",
-                "customer": {
-                    "email": tx.get("email", "subscriber@purecinema.app")
-                },
-                "plan": tx.get("plan", "vip_monthly"),
+                "customer": {"email": tx.email if tx else "subscriber@purecinema.app"},
+                "plan": tx.plan_id if tx else "student_monthly",
                 "mock": True
             }
         }
 
-    # 3. Live Paystack Verification
+    # 3. Live Paystack API Verification
     secret_key = get_secret_key()
     url = f"https://api.paystack.co/transaction/verify/{reference}"
-    headers = {
-        "Authorization": f"Bearer {secret_key}"
-    }
+    headers = {"Authorization": f"Bearer {secret_key}"}
 
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
             resp = await client.get(url, headers=headers)
             data = resp.json()
             if resp.status_code == 200 and data.get("status"):
-                # Mark as success locally
-                if reference in active_transactions:
-                    active_transactions[reference]["status"] = "success"
+                p_data = data.get("data", {})
+                status_val = p_data.get("status")
+
+                if tx:
+                    tx.status = status_val
+                    tx.channel = p_data.get("channel")
+                    tx.gateway_response = p_data.get("gateway_response")
+                    tx.raw_payload = json.dumps(p_data)
+                    tx.paid_at = datetime.datetime.utcnow()
+                    try:
+                        db.commit()
+                    except Exception:
+                        db.rollback()
+
+                if status_val == "success":
+                    email = p_data.get("customer", {}).get("email") or (tx.email if tx else "")
+                    plan_id = p_data.get("metadata", {}).get("plan") or (tx.plan_id if tx else "vip_monthly")
+                    record_active_subscription(db, email, plan_id)
+
                 return data
             else:
-                # If paystack returns verification payload with status
                 return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
 
 @router.post("/admin-bypass")
-async def admin_bypass(payload: AdminBypassRequest):
+async def admin_bypass(payload: AdminBypassRequest, db: Session = Depends(get_db)):
     """
-    Direct VIP Bypass endpoint strictly for Administrator accounts.
-    Instantly grants full lifetime VIP access without requiring a charge.
+    Direct VIP Bypass endpoint strictly for Master Administrator accounts.
+    Logs transaction & activates lifetime VIP in PostgreSQL.
     """
-    if not is_admin_email(payload.email) and payload.admin_key != "pure_cinema_master_admin_2026":
+    clean_email = payload.email.strip().lower()
+    if not is_admin_email(clean_email) and payload.admin_key != "pure_cinema_master_admin_2026":
         raise HTTPException(
             status_code=403,
             detail="Access Denied: Payment bypass is restricted to Master Admin accounts only."
         )
 
     bypass_ref = f"admin_bypass_{uuid.uuid4().hex[:12]}"
-    active_transactions[bypass_ref] = {
-        "reference": bypass_ref,
-        "email": payload.email,
-        "amount": 0,
-        "plan": payload.plan or "founder_lifetime",
-        "status": "success",
-        "is_admin_bypass": True,
-        "created_at": time.time()
-    }
+    user = db.query(UserModel).filter(UserModel.email == clean_email).first()
+
+    tx = TransactionModel(
+        id=f"tx_{uuid.uuid4().hex[:12]}",
+        reference=bypass_ref,
+        user_id=user.id if user else None,
+        email=clean_email,
+        amount=0,
+        currency="NGN",
+        plan_id=payload.plan or "founder_lifetime",
+        status="success",
+        channel="admin_privilege",
+        gateway_response="Admin Bypass Granted",
+        paid_at=datetime.datetime.utcnow(),
+        is_mock=False,
+        is_admin_bypass=True
+    )
+    db.add(tx)
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    record_active_subscription(db, clean_email, payload.plan or "founder_lifetime", is_admin=True)
 
     return {
         "status": True,
@@ -302,7 +380,7 @@ async def admin_bypass(payload: AdminBypassRequest):
             "reference": bypass_ref,
             "status": "success",
             "plan": payload.plan or "founder_lifetime",
-            "email": payload.email,
+            "email": clean_email,
             "is_admin": True,
             "features": [
                 "4K HDR 60 FPS Master Quality",
@@ -316,22 +394,47 @@ async def admin_bypass(payload: AdminBypassRequest):
     }
 
 @router.post("/webhook")
-async def paystack_webhook(request: Request):
+async def paystack_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+    x_paystack_signature: Optional[str] = Header(None)
+):
     """
-    Paystack Webhook event listener for asynchronous charge status updates.
+    Paystack Webhook listener with HMAC-SHA512 Signature verification.
     """
+    secret_key = get_secret_key()
+    body_bytes = await request.body()
+
+    # Validate signature if secret key is present
+    if secret_key and not secret_key.startswith("sk_test_mock") and x_paystack_signature:
+        computed_sig = hmac.new(secret_key.encode('utf-8'), body_bytes, hashlib.sha512).hexdigest()
+        if not hmac.compare_digest(computed_sig, x_paystack_signature):
+            raise HTTPException(status_code=400, detail="Invalid Paystack Webhook Signature")
+
     try:
-        event = await request.json()
+        event = json.loads(body_bytes.decode('utf-8'))
         event_type = event.get("event")
         data = event.get("data", {})
         reference = data.get("reference")
-        
+
         if event_type == "charge.success" and reference:
-            if reference in active_transactions:
-                active_transactions[reference]["status"] = "success"
-                active_transactions[reference]["paid_at"] = time.time()
-        
+            tx = db.query(TransactionModel).filter(TransactionModel.reference == reference).first()
+            if tx:
+                tx.status = "success"
+                tx.channel = data.get("channel")
+                tx.gateway_response = data.get("gateway_response")
+                tx.raw_payload = json.dumps(data)
+                tx.paid_at = datetime.datetime.utcnow()
+                try:
+                    db.commit()
+                except Exception:
+                    db.rollback()
+
+            email = data.get("customer", {}).get("email") or (tx.email if tx else None)
+            plan_id = data.get("metadata", {}).get("plan") or (tx.plan_id if tx else "student_monthly")
+            if email:
+                record_active_subscription(db, email, plan_id)
+
         return {"status": True, "message": "Webhook processed successfully"}
     except Exception as e:
         return {"status": False, "message": f"Webhook parsing error: {str(e)}"}
-
