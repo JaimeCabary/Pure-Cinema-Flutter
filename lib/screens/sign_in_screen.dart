@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/cinema_logo.dart';
 import '../theme/fonts.dart';
+import 'auth_screen.dart';
 import 'main_nav_screen.dart';
 import 'sign_up_screen.dart';
 
@@ -241,13 +242,12 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Password reset link will be sent to your registered email.',
-                              style: AppFonts.sCoreDream(fontSize: 12),
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => AuthScreen(
+                              initialMode: AuthMode.forgotPassword,
+                              initialEmail: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
                             ),
-                            backgroundColor: const Color(0xFF222222),
                           ),
                         );
                       },
