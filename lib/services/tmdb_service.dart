@@ -478,7 +478,7 @@ class TMDBService {
       }
     } catch (_) {}
 
-    return const [
+    return [
       Movie(
         id: 900001,
         title: 'Big Buck Bunny (Blender Open Movie)',

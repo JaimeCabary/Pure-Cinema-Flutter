@@ -265,6 +265,55 @@ class _WatchScreenState extends State<WatchScreen> {
     _triggerIndicator(Icons.speed, '${next}x');
   }
 
+  void _showQualityPickerModal() {
+    final qualities = [
+      '4K Ultra HD (2160p)',
+      'Full HD (1080p)',
+      'HD Ready (720p)',
+      'Data Saver (480p)',
+    ];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F0F12),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select Streaming Quality',
+                style: AppFonts.sCoreDream(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ...qualities.map((q) {
+                final isSelected = q == _selectedQuality;
+                return ListTile(
+                  title: Text(
+                    q,
+                    style: AppFonts.sCoreDream(
+                      color: isSelected ? Colors.amber : Colors.white70,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.amber) : null,
+                  onTap: () {
+                    setState(() => _selectedQuality = q);
+                    Navigator.pop(ctx);
+                    _triggerIndicator(Icons.hd_rounded, q.split(' ').first);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _openEpisodesDrawer() {
     showModalBottomSheet(
       context: context,
