@@ -52,7 +52,15 @@ def seed_default_users(db: Session):
     """
     default_accounts = [
         {
-            "id": "admin-shazzy-id",
+            "id": "admin-shazzy-id-1",
+            "email": "shazzyazuwike@gmail.com",
+            "name": "Shalom Chidi (Admin)",
+            "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80",
+            "role": "ADMIN",
+            "password": "password123"
+        },
+        {
+            "id": "admin-shazzy-id-2",
             "email": "shazzyazwike@gmail.com",
             "name": "Shazzy (Admin)",
             "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80",
