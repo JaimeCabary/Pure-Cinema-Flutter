@@ -63,11 +63,15 @@
       height: 100%;
       width: 100%;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     flutter-view, flt-glass-pane, flt-scene-host, canvas {
       background-color: #050505 !important;
       background: #050505 !important;
+      touch-action: manipulation;
     }
     .status-bar, .device-header, .header-bar, [class*="statusbar"], [class*="status-bar"], [class*="topbar"], [class*="notch"], [class*="island"] {
       background: #050505 !important;
