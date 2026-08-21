@@ -240,17 +240,17 @@ class PaymentService {
     };
   }
 
-  /// Opens Paystack Checkout URL in browser / custom tab
+  /// Opens Paystack Checkout URL natively inside the app via In-App Browser View / Custom Tabs
   static Future<bool> launchPaystackCheckout(String url) async {
     try {
       final uri = Uri.parse(url);
       if (kIsWeb) {
-        return await launchUrl(uri, webOnlyWindowName: '_blank');
+        return await launchUrl(uri, webOnlyWindowName: '_self');
       }
       if (await canLaunchUrl(uri)) {
         return await launchUrl(
           uri,
-          mode: LaunchMode.externalApplication,
+          mode: LaunchMode.inAppBrowserView,
         );
       }
     } catch (_) {}
