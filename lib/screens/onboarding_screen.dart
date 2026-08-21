@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/fonts.dart';
 import '../widgets/subscription_modal.dart';
+import '../widgets/cinema_logo.dart';
 import '../services/tmdb_service.dart';
 import 'landing_screen.dart';
 import 'main_nav_screen.dart';
@@ -160,31 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white70, width: 1.2),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'PURE CINEMA',
-                        style: AppFonts.sCoreDream(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                    ],
-                  ),
+                  const CinemaLogo(fontSize: 13),
                   GestureDetector(
                     onTap: () => _finishOnboarding(),
                     child: Text(
