@@ -131,11 +131,16 @@ class _HomeScreenState extends State<HomeScreen> {
         _animation = results[9];
         _publicDomain = results[10];
 
-        // Curate hero banner from top distinct items
-        _heroMovies = [
-          ..._bestPicks.take(3),
-          ..._trending.take(2),
-        ];
+        // Curate hero banner from 5 completely unique top movies (no duplicates)
+        final heroSet = <int>{};
+        _heroMovies = [];
+        for (final m in [..._bestPicks, ..._trending, ..._topRated]) {
+          if (!heroSet.contains(m.id)) {
+            heroSet.add(m.id);
+            _heroMovies.add(m);
+            if (_heroMovies.length >= 5) break;
+          }
+        }
 
         _isLoading = false;
       });
