@@ -71,7 +71,10 @@
     flutter-view, flt-glass-pane, flt-scene-host, canvas {
       background-color: #050505 !important;
       background: #050505 !important;
-      touch-action: manipulation;
+      touch-action: none !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
     }
     .status-bar, .device-header, .header-bar, [class*="statusbar"], [class*="status-bar"], [class*="topbar"], [class*="notch"], [class*="island"] {
       background: #050505 !important;
