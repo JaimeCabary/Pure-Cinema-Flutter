@@ -141,11 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _startHeroTimer();
 
-      // Immediately precache poster images for all loaded rows
+      // Immediately precache poster & backdrop images for all loaded rows and hero banner
       for (final list in results) {
         for (final movie in list) {
           if (movie.posterUrl.isNotEmpty && mounted) {
             precacheImage(CachedNetworkImageProvider(movie.posterUrl), context);
+          }
+          if (movie.backdropUrl.isNotEmpty && mounted) {
+            precacheImage(CachedNetworkImageProvider(movie.backdropUrl), context);
           }
         }
       }
@@ -181,11 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // App Bar with Pure Cinema Breathing Logo & Profile Avatar
+                  // App Bar with Pure Cinema Breathing Logo & Profile Avatar (PINNED PERMANENTLY)
                   SliverAppBar(
-                    floating: true,
-                    pinned: false,
-                    backgroundColor: const Color(0xFF050505).withValues(alpha: 0.95),
+                    floating: false,
+                    pinned: true,
+                    backgroundColor: const Color(0xFF050505),
                     elevation: 0,
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -277,10 +280,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildSectionHeader('Animation & Anime', query: 'Animation'),
                   _buildMovieRow(_animation, 'Animation & Anime'),
 
-                  // 11. Available Movies (100% Streamable Vault)
+                  // 11. Available Movies
                   if (_publicDomain.isNotEmpty) ...[
-                    _buildSectionHeader('Available Movies (100% Streamable Vault)', query: 'Public Domain'),
-                    _buildMovieRow(_publicDomain, 'Available Movies (100% Streamable Vault)'),
+                    _buildSectionHeader('Available Movies', query: 'Public Domain'),
+                    _buildMovieRow(_publicDomain, 'Available Movies'),
                   ],
 
                   // Bottom Spacing for Floating Capsule Dock Navbar

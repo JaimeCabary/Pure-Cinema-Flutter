@@ -128,7 +128,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
       email: email,
       amountInNaira: plan.price,
       planId: plan.id,
-      useMock: _mockMode,
+      useMock: false,
     );
 
     final data = initRes['data'] as Map<String, dynamic>? ?? {};

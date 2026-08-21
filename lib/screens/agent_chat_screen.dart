@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/agent_service.dart';
 import '../services/auth_service.dart';
 import '../theme/fonts.dart';
@@ -17,30 +18,28 @@ class AgentChatScreen extends StatefulWidget {
   State<AgentChatScreen> createState() => _AgentChatScreenState();
 }
 
-class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderStateMixin {
+class _AgentChatScreenState extends State<AgentChatScreen> {
   final List<AgentChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  late AnimationController _pulseController;
   bool _isLoading = false;
   String _userName = '';
 
+  // Outsourced clean monochrome avatar image
+  final String _botAvatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&fit=crop&q=80';
+
   List<String> _suggestedPrompts = [
-    '🎬 Recommend Sci-Fi Movies',
-    '🍿 Show Available Movies Vault',
-    '📺 Open Live TV (10,000+ Channels)',
-    '⭐ Check My Watchlist',
-    '⚡ Interstellar Lore & Physics',
+    'Recommend Sci-Fi movies',
+    'Show Available Movies',
+    'Open Live TV (10,000+ Channels)',
+    'Check My Watchlist',
+    'Interstellar plot explanation',
   ];
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
     _initGreeting();
   }
 
@@ -53,8 +52,8 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
     }
 
     final welcomeText = greetingName.isNotEmpty
-        ? 'Welcome back, $greetingName! I am your AI CineBot Concierge. Ask me for movie recommendations, plot breakdowns, or ask me to control the app for you!'
-        : 'Welcome to Pure Cinema! I am your AI CineBot Concierge. Ask me for movie recommendations, plot breakdowns, or ask me to control the app for you!';
+        ? 'Hi $greetingName, how can I help you today?'
+        : 'Hi there, how can I help you today?';
 
     if (mounted) {
       setState(() {
@@ -70,7 +69,6 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
 
   @override
   void dispose() {
-    _pulseController.dispose();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -81,8 +79,8 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
         );
       }
     });
@@ -105,7 +103,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
     );
 
     if (mounted) {
-      final reply = res['reply'] as String? ?? 'Sorry, I couldn\'t process that request right now.';
+      final reply = res['reply'] as String? ?? 'Sorry, I couldn\'t process that request.';
       final rawActions = res['actions'] as List<dynamic>? ?? [];
       final rawPrompts = (res['suggestedPrompts'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
 
@@ -122,7 +120,6 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
       });
       _scrollToBottom();
 
-      // Trigger actions if returned from backend
       for (final act in rawActions) {
         final type = act['type'] as String?;
         final payload = act['payload'] as Map<String, dynamic>? ?? {};
@@ -153,103 +150,60 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
     final cleanedText = _cleanContent(msg.content);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            // Glowing AI Bot Avatar
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00E5FF).withValues(alpha: 0.4),
-                    blurRadius: 10,
-                    spreadRadius: 1,
+            // Monochrome Outsourced Avatar Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: CachedNetworkImage(
+                imageUrl: _botAvatarUrl,
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F1F24),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF3F3F46)),
                   ),
-                ],
+                  child: const Icon(Icons.smart_toy_outlined, color: Colors.white, size: 16),
+                ),
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isUser ? Colors.white : const Color(0xFF101014),
+                // Pure Monochrome: Solid White for User, Dark Zinc Grey for Assistant
+                color: isUser ? Colors.white : const Color(0xFF121214),
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isUser ? 18 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 18),
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isUser ? 16 : 4),
+                  bottomRight: Radius.circular(isUser ? 4 : 16),
                 ),
                 border: Border.all(
-                  color: isUser
-                      ? Colors.white
-                      : const Color(0xFF27272A),
+                  color: isUser ? Colors.white : const Color(0xFF27272A),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isUser ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!isUser)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'AI CINEBOT',
-                            style: AppFonts.sCoreDream(
-                              color: const Color(0xFF00E5FF),
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E24),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'GEMINI 3.6',
-                              style: AppFonts.sCoreDream(
-                                color: Colors.white70,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   Text(
                     cleanedText,
                     style: AppFonts.sCoreDream(
-                      color: isUser ? Colors.black : const Color(0xFFF4F4F5),
+                      color: isUser ? Colors.black : Colors.white,
                       fontSize: 13.5,
-                      fontWeight: isUser ? FontWeight.w800 : FontWeight.w400,
-                      height: 1.48,
+                      fontWeight: isUser ? FontWeight.w700 : FontWeight.w400,
+                      height: 1.45,
                     ),
                   ),
                 ],
@@ -259,26 +213,20 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
           if (isUser) ...[
             const SizedBox(width: 10),
             Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE4E4E7), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                  ),
-                ],
+                border: Border.all(color: const Color(0xFF3F3F46)),
               ),
               child: Center(
                 child: Text(
                   _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
                   style: AppFonts.sCoreDream(
                     color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -291,50 +239,33 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
 
   Widget _buildThinkingIndicator() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                  blurRadius: 8,
-                ),
-              ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: CachedNetworkImage(
+              imageUrl: _botAvatarUrl,
+              width: 28,
+              height: 28,
+              fit: BoxFit.cover,
             ),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF101014),
-              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF121214),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFF27272A)),
             ),
-            child: Row(
-              children: [
-                FadeTransition(
-                  opacity: _pulseController,
-                  child: const Icon(Icons.psychology_rounded, color: Color(0xFF00E5FF), size: 16),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'CineBot is analyzing movie archives...',
-                  style: AppFonts.sCoreDream(
-                    color: Colors.white70,
-                    fontSize: 11.5,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
+            child: Text(
+              'CineBot is typing...',
+              style: AppFonts.sCoreDream(
+                color: Colors.white54,
+                fontSize: 11.5,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ],
@@ -347,71 +278,40 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0E),
+        backgroundColor: const Color(0xFF050505),
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
-            // Holographic Animated Avatar Header
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF00E5FF), Color(0xFFFF007F)],
-                ),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF050505),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 18),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: CachedNetworkImage(
+                imageUrl: _botAvatarUrl,
+                width: 30,
+                height: 30,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'AI CINEBOT',
-                      style: AppFonts.sCoreDream(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.6)),
-                      ),
-                      child: Text(
-                        'ONLINE',
-                        style: AppFonts.sCoreDream(
-                          color: const Color(0xFF00E5FF),
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'AI CINEBOT',
+                  style: AppFonts.sCoreDream(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
                 ),
                 Text(
-                  'Powered by Google Gemini 3.6 Hyperdrive',
-                  style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 10),
+                  'Google Gemini 3.6',
+                  style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 9.5),
                 ),
               ],
             ),
@@ -421,17 +321,9 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
       body: SafeArea(
         child: Column(
           children: [
-            // Ambient Neon Glow Divider
-            Container(
-              height: 1.5,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.transparent, Color(0xFF00E5FF), Color(0xFF7C4DFF), Colors.transparent],
-                ),
-              ),
-            ),
+            const Divider(color: Color(0xFF1F1F23), height: 1),
 
-            // Message List
+            // Messages List
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -447,11 +339,11 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
               ),
             ),
 
-            // Quick Suggestion Chips Row
+            // Monochrome Action Chips
             if (_suggestedPrompts.isNotEmpty)
               Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                height: 38,
+                padding: const EdgeInsets.symmetric(vertical: 2),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -462,19 +354,13 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
                       padding: const EdgeInsets.only(right: 8),
                       child: InkWell(
                         onTap: () => _handleSubmitted(prompt),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF141418),
-                            borderRadius: BorderRadius.circular(20),
+                            color: const Color(0xFF121214),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: const Color(0xFF27272A)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 4,
-                              ),
-                            ],
                           ),
                           child: Text(
                             prompt,
@@ -497,7 +383,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
             Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
-                color: Color(0xFF0B0B0E),
+                color: Color(0xFF050505),
                 border: Border(top: BorderSide(color: Color(0xFF1F1F23))),
               ),
               child: Row(
@@ -505,7 +391,7 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF16161B),
+                        color: const Color(0xFF121214),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: const Color(0xFF27272A)),
                       ),
@@ -527,23 +413,13 @@ class _AgentChatScreenState extends State<AgentChatScreen> with TickerProviderSt
                   GestureDetector(
                     onTap: () => _handleSubmitted(_textController.text),
                     child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF00E5FF), Color(0xFF7C4DFF)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF00E5FF).withValues(alpha: 0.4),
-                            blurRadius: 10,
-                          ),
-                        ],
                       ),
-                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                      child: const Icon(Icons.send_rounded, color: Colors.black, size: 18),
                     ),
                   ),
                 ],

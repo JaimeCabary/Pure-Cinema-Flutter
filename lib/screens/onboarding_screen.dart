@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/fonts.dart';
-import '../widgets/subscription_modal.dart';
 import '../widgets/cinema_logo.dart';
 import '../services/tmdb_service.dart';
-import 'landing_screen.dart';
+import 'sign_in_screen.dart';
+import 'sign_up_screen.dart';
 import 'main_nav_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -23,44 +23,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Masterpiece Cinema\nin True 4K Ultra HD',
       'subtitle': 'Stream curated film masterpieces, Hollywood blockbusters, and award-winning motion pictures with direct studio bitrates.',
-      'image': 'https://image.tmdb.org/t/p/original/xJHokMbljvjADYdit5fK5VQsXEG.jpg', // Interstellar 4K
+      'image': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&q=90', // Cinema Theater 4K
       'badge': '4K HDR CINEMA',
     },
     {
       'title': '10,000+ Worldwide\nLive TV Channels',
       'subtitle': 'Experience seamless 60 FPS live sports, international news, cinema networks, and global broadcasts on demand.',
-      'image': 'https://image.tmdb.org/t/p/original/sAtoMqDVhNDQBc3QJL3RF6hlxGq.jpg', // Blade Runner 2049 4K
+      'image': 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=1600&q=90', // Live Studio Broadcast 4K
       'badge': '60 FPS BROADCAST',
     },
     {
-      'title': 'Pure Cinema VIP\n& AI CineBot Access',
-      'subtitle': 'Unlock unrestricted 4K streaming, Dolby Atmos, and our GenAI ADK concierge with instant Paystack activation.',
-      'image': 'https://image.tmdb.org/t/p/original/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg', // Oppenheimer 4K
-      'badge': 'VIP PASS ₦2,500',
+      'title': 'UNCOMPROMISED\nCINEMA 4K',
+      'subtitle': 'Experience master-quality motion pictures, 60 FPS live broadcast suite, and curated visual arts.',
+      'image': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&q=90', // Cinema Motion Picture 4K
+      'badge': 'PURE CINEMA VIP',
     },
   ];
 
   @override
   void initState() {
     super.initState();
-    // Proactively preload and cache all movie poster datasets in background during onboarding
     _preloadMoviePosters();
   }
 
   void _preloadMoviePosters() {
     Future.microtask(() async {
       try {
+        if (mounted) {
+          for (final slide in _slides) {
+            precacheImage(CachedNetworkImageProvider(slide['image']!), context);
+          }
+        }
         final allMovies = await Future.wait([
           TMDBService.fetchNowPlaying(),
           TMDBService.fetchTrending(),
           TMDBService.fetchTopRated(),
           TMDBService.fetchTVShows(),
-          TMDBService.fetchDocuseries(),
-          TMDBService.fetchBiographies(),
-          TMDBService.fetchSports(),
-          TMDBService.fetchRomance(),
-          TMDBService.fetchFaith(),
-          TMDBService.fetchAnimation(),
         ]);
 
         if (!mounted) return;
@@ -85,20 +83,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => enterDirectly ? const MainNavScreen() : const LandingScreen(),
+        pageBuilder: (_, __, ___) => enterDirectly ? const MainNavScreen() : const SignInScreen(),
         transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
         transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
 
-  void _openPaystackVIPModal() {
-    SubscriptionModal.show(
-      context,
-      onCompleted: () {
-        // When VIP is successfully activated with checkmark verified celebration
-        _finishOnboarding(enterDirectly: true);
-      },
+  void _openSignIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_onboarding', true);
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+    );
+  }
+
+  void _openSignUp() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_onboarding', true);
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SignUpScreen()),
     );
   }
 
@@ -133,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     errorWidget: (_, __, ___) => Container(color: const Color(0xFF050505)),
                   ),
 
-                  // Cinematic Dark Vignette & Multi-stop Gradients
+                  // Cinematic Dark Vignette
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -162,24 +168,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const CinemaLogo(fontSize: 13),
-                  GestureDetector(
-                    onTap: () => _finishOnboarding(),
-                    child: Text(
-                      'SKIP',
-                      style: AppFonts.sCoreDream(
-                        color: Colors.white60,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+                  if (!isLastPage)
+                    GestureDetector(
+                      onTap: () => _pageController.animateToPage(
+                        2,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
+                      child: Text(
+                        'SKIP',
+                        style: AppFonts.sCoreDream(
+                          color: Colors.white60,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
           ),
 
-          // Bottom Content & Navigation
+          // Bottom Content & Actions
           Positioned(
             left: 24,
             right: 24,
@@ -192,7 +203,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isLastPage ? const Color(0xFF10B981) : Colors.white,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -229,7 +240,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Slide Indicators
                 Row(
@@ -241,90 +252,114 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: isActive ? 24 : 6,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: isActive ? (isLastPage ? const Color(0xFF10B981) : Colors.white) : Colors.white24,
+                        color: isActive ? Colors.white : Colors.white24,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     );
                   }),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
-                // Primary Action Button (CONTINUE / PAYSTACK VIP)
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: isLastPage
-                      ? ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            elevation: 6,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 20),
-                          onPressed: _openPaystackVIPModal,
-                          label: Text(
-                            'ACTIVATE VIP WITH PAYSTACK',
-                            style: AppFonts.sCoreDream(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        )
-                      : ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeInOutCubic,
-                            );
-                          },
-                          child: Text(
-                            'CONTINUE',
-                            style: AppFonts.sCoreDream(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2.0,
-                            ),
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 10),
-
-                // Secondary Action Button (EXPLORE AS GUEST - Constant on all slides)
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF333333)),
-                      backgroundColor: const Color(0x33141414),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // Action Buttons for Slide 3 (Matching 5th Screenshot)
+                if (isLastPage) ...[
+                  // SIGN IN
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                    ),
-                    onPressed: () => _finishOnboarding(),
-                    child: Text(
-                      'EXPLORE AS GUEST',
-                      style: AppFonts.sCoreDream(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
+                      onPressed: _openSignIn,
+                      child: Text(
+                        'SIGN IN',
+                        style: AppFonts.sCoreDream(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+
+                  // CREATE ACCOUNT
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF18181B),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF3F3F46)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: _openSignUp,
+                      child: Text(
+                        'CREATE ACCOUNT',
+                        style: AppFonts.sCoreDream(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ENTER AS GUEST
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF333333)),
+                        backgroundColor: const Color(0x33141414),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => _finishOnboarding(enterDirectly: true),
+                      child: Text(
+                        'ENTER AS GUEST',
+                        style: AppFonts.sCoreDream(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  // Slides 1 & 2: Single CONTINUE button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOutCubic,
+                        );
+                      },
+                      child: Text(
+                        'CONTINUE',
+                        style: AppFonts.sCoreDream(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
