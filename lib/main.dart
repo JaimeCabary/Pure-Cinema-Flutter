@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/auth_service.dart';
 import 'services/database_service.dart';
+import 'services/download_service.dart';
 import 'screens/main_nav_screen.dart';
 import 'screens/onboarding_screen.dart';
 
@@ -24,6 +25,7 @@ void main() async {
 
   final user = await AuthService.getCurrentUser();
   await DatabaseService.init();
+  await DownloadService.init();
   final prefs = await SharedPreferences.getInstance();
   final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
 

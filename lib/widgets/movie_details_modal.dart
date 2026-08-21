@@ -6,6 +6,7 @@ import '../models/cast_member.dart';
 import '../services/tmdb_service.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
+import '../services/download_service.dart';
 import '../screens/watch_screen.dart';
 import '../theme/fonts.dart';
 import 'movie_card.dart';
@@ -683,6 +684,71 @@ class _MovieDetailsModalState extends State<MovieDetailsModal> {
                               Text(
                                 _isInList ? 'IN LIST' : 'MY LIST',
                                 style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      InkWell(
+                        onTap: () {
+                          final isDownloaded = DownloadService.isDownloaded(movie.id);
+                          if (isDownloaded) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: const Color(0xFF18181B),
+                                content: Text(
+                                  '${movie.title} is already saved in your Offline Downloads!',
+                                  style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
+                                ),
+                              ),
+                            );
+                          } else {
+                            DownloadService.downloadMovie(
+                              movie,
+                              onStatus: (msg) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: const Color(0xFF18181B),
+                                      duration: const Duration(seconds: 2),
+                                      content: Text(
+                                        msg,
+                                        style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12),
+                                      ),
+                                    ),
+                                  );
+                                  setState(() {});
+                                }
+                              },
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white24),
+                            borderRadius: BorderRadius.circular(6),
+                            color: DownloadService.isDownloaded(movie.id)
+                                ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                                : Colors.transparent,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                DownloadService.isDownloaded(movie.id) ? Icons.download_done_rounded : Icons.download_rounded,
+                                color: DownloadService.isDownloaded(movie.id) ? const Color(0xFF10B981) : Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                DownloadService.isDownloaded(movie.id) ? 'SAVED' : 'DOWNLOAD',
+                                style: AppFonts.sCoreDream(
+                                  color: DownloadService.isDownloaded(movie.id) ? const Color(0xFF10B981) : Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ],
                           ),
