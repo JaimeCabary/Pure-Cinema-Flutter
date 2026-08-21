@@ -307,168 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: _heroMovies.length,
             itemBuilder: (context, idx) {
               final movie = _heroMovies[idx];
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  // High-Res Backdrop Image
-                  CachedNetworkImage(
-                    imageUrl: movie.backdropUrl,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    placeholder: (_, __) => Container(color: const Color(0xFF0F0F0F)),
-                    errorWidget: (_, __, ___) => Container(color: Colors.black),
-                  ),
-
-                  // Smooth Obsidian Cinematic Gradients
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.transparent,
-                          Color(0xCC050505),
-                          Color(0xFF050505),
-                        ],
-                        stops: [0.0, 0.35, 0.75, 1.0],
-                      ),
-                    ),
-                  ),
-
-                  // Movie Info Overlay
-                  Positioned(
-                    bottom: 24,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          movie.title,
-                          style: AppFonts.sCoreDream(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Text(
-                              '${(movie.voteAverage * 10).toInt()}% Match',
-                              style: AppFonts.sCoreDream(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              movie.releaseYear,
-                              style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(3),
-                                border: Border.all(color: Colors.white24, width: 0.8),
-                              ),
-                              child: Text(
-                                '4K ULTRA HD',
-                                style: AppFonts.sCoreDream(
-                                  color: Colors.white,
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          movie.overview,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppFonts.sCoreDream(
-                            color: Colors.white70,
-                            fontSize: 11.5,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Action Buttons: Play (Cinema Watch), Add to List, Details Modal
-                        Row(
-                          children: [
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 20),
-                              label: Text(
-                                'PLAY',
-                                style: AppFonts.sCoreDream(
-                                  color: Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 10),
-                            OutlinedButton.icon(
-                              icon: Icon(
-                                _watchlist.contains(movie.id) ? Icons.check_rounded : Icons.add_rounded,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              label: Text(
-                                _watchlist.contains(movie.id) ? 'ADDED' : 'ADD',
-                                style: AppFonts.sCoreDream(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white30),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              ),
-                              onPressed: () => _toggleWatchlist(movie),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 22),
-                              onPressed: () {
-                                MovieDetailsModal.show(
-                                  context,
-                                  movie,
-                                  _watchlist.contains(movie.id),
-                                  () => _toggleWatchlist(movie),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              return _HeroCarouselItem(
+                movie: movie,
+                isInWatchlist: _watchlist.contains(movie.id),
+                onToggleWatchlist: () => _toggleWatchlist(movie),
               );
             },
           ),
@@ -619,6 +461,202 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HeroCarouselItem extends StatefulWidget {
+  final Movie movie;
+  final bool isInWatchlist;
+  final VoidCallback onToggleWatchlist;
+
+  const _HeroCarouselItem({
+    required this.movie,
+    required this.isInWatchlist,
+    required this.onToggleWatchlist,
+  });
+
+  @override
+  State<_HeroCarouselItem> createState() => _HeroCarouselItemState();
+}
+
+class _HeroCarouselItemState extends State<_HeroCarouselItem> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final movie = widget.movie;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // High-Res Backdrop Image with RAM Cache & KeepAlive
+        CachedNetworkImage(
+          imageUrl: movie.backdropUrl,
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+          memCacheWidth: 1200,
+          useOldImageOnUrlChange: true,
+          fadeInDuration: const Duration(milliseconds: 100),
+          placeholder: (_, __) => Container(color: const Color(0xFF0F0F12)),
+          errorWidget: (_, __, ___) => CachedNetworkImage(
+            imageUrl: movie.posterUrl,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
+        ),
+
+        // Smooth Obsidian Cinematic Gradients
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.transparent,
+                Color(0xCC050505),
+                Color(0xFF050505),
+              ],
+              stops: [0.0, 0.35, 0.75, 1.0],
+            ),
+          ),
+        ),
+
+        // Movie Info Overlay
+        Positioned(
+          bottom: 24,
+          left: 20,
+          right: 20,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                movie.title,
+                style: AppFonts.sCoreDream(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text(
+                    '${(movie.voteAverage * 10).toInt()}% Match',
+                    style: AppFonts.sCoreDream(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    movie.releaseYear,
+                    style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 11),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(3),
+                      border: Border.all(color: Colors.white24, width: 0.8),
+                    ),
+                    child: Text(
+                      '4K ULTRA HD',
+                      style: AppFonts.sCoreDream(
+                        color: Colors.white,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                movie.overview,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.sCoreDream(
+                  color: Colors.white70,
+                  fontSize: 11.5,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Action Buttons: Play (Cinema Watch), Add to List, Details Modal
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 20),
+                    label: Text(
+                      'PLAY',
+                      style: AppFonts.sCoreDream(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => WatchScreen(movie: movie)),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton.icon(
+                    icon: Icon(
+                      widget.isInWatchlist ? Icons.check_rounded : Icons.add_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    label: Text(
+                      widget.isInWatchlist ? 'ADDED' : 'ADD',
+                      style: AppFonts.sCoreDream(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.white30),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: widget.onToggleWatchlist,
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 22),
+                    onPressed: () {
+                      MovieDetailsModal.show(
+                        context,
+                        movie,
+                        widget.isInWatchlist,
+                        widget.onToggleWatchlist,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
