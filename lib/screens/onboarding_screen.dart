@@ -194,11 +194,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Positioned(
             left: 24,
             right: 24,
-            bottom: 36,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            bottom: 16,
+            top: MediaQuery.of(context).size.height * 0.35,
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 // Badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

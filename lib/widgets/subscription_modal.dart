@@ -606,8 +606,8 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
   Widget _buildProcessingView() {
     final plan = _plans[_selectedPlanIndex];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -738,8 +738,8 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
   Widget _buildSuccessView() {
     final plan = _plans[_selectedPlanIndex];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
