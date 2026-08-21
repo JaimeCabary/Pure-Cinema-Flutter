@@ -244,6 +244,9 @@ class PaymentService {
   static Future<bool> launchPaystackCheckout(String url) async {
     try {
       final uri = Uri.parse(url);
+      if (kIsWeb) {
+        return await launchUrl(uri, webOnlyWindowName: '_blank');
+      }
       if (await canLaunchUrl(uri)) {
         return await launchUrl(
           uri,

@@ -19,13 +19,27 @@ class Movie {
     this.genreIds,
   });
 
-  String get posterUrl => posterPath != null
-      ? 'https://image.tmdb.org/t/p/w500$posterPath'
-      : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&q=80';
+  String get posterUrl {
+    if (posterPath == null || posterPath!.isEmpty) {
+      return 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&q=80';
+    }
+    if (posterPath!.startsWith('http://') || posterPath!.startsWith('https://')) {
+      return posterPath!;
+    }
+    final cleanPath = posterPath!.startsWith('/') ? posterPath! : '/$posterPath';
+    return 'https://image.tmdb.org/t/p/w500$cleanPath';
+  }
 
-  String get backdropUrl => backdropPath != null
-      ? 'https://image.tmdb.org/t/p/original$backdropPath'
-      : 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=1200&q=80';
+  String get backdropUrl {
+    if (backdropPath == null || backdropPath!.isEmpty) {
+      return 'https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=1200&q=80';
+    }
+    if (backdropPath!.startsWith('http://') || backdropPath!.startsWith('https://')) {
+      return backdropPath!;
+    }
+    final cleanPath = backdropPath!.startsWith('/') ? backdropPath! : '/$backdropPath';
+    return 'https://image.tmdb.org/t/p/original$cleanPath';
+  }
 
   String get releaseYear => releaseDate.isNotEmpty ? releaseDate.split('-')[0] : '2026';
 

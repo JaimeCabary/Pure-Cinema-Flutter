@@ -28,11 +28,15 @@ class MovieCard extends StatefulWidget {
   State<MovieCard> createState() => _MovieCardState();
 }
 
-class _MovieCardState extends State<MovieCard> {
+class _MovieCardState extends State<MovieCard> with AutomaticKeepAliveClientMixin {
   bool _isHovered = false;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -70,13 +74,49 @@ class _MovieCardState extends State<MovieCard> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Poster Image
+                  // Poster Image with RAM Memory Cache & KeepAlive
                   CachedNetworkImage(
                     imageUrl: widget.movie.posterUrl,
                     fit: BoxFit.cover,
+                    memCacheWidth: (widget.width * 2.5).round(),
+                    useOldImageOnUrlChange: true,
+                    fadeInDuration: const Duration(milliseconds: 120),
+                    placeholder: (_, __) => Container(
+                      color: const Color(0xFF141418),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.white24,
+                          ),
+                        ),
+                      ),
+                    ),
                     errorWidget: (_, __, ___) => Container(
-                      color: const Color(0xFF181818),
-                      child: const Icon(Icons.movie_outlined, color: Colors.white24),
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF1F1F24), Color(0xFF0F0F12)],
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.movie_rounded, color: Colors.white38, size: 24),
+                          const SizedBox(height: 6),
+                          Text(
+                            widget.movie.title,
+                            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 

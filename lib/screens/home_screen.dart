@@ -543,6 +543,8 @@ class _HomeScreenState extends State<HomeScreen> {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          cacheExtent: 2500.0,
+          addAutomaticKeepAlives: true,
           itemCount: movies.length + 1, // Movies + End "See More" Card
           itemBuilder: (context, index) {
             if (index == movies.length) {

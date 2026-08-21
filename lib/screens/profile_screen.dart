@@ -7,6 +7,8 @@ import '../widgets/subscription_modal.dart';
 import '../theme/fonts.dart';
 import 'auth_screen.dart';
 import 'landing_screen.dart';
+import 'sign_in_screen.dart';
+import 'sign_up_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -158,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AuthScreen(initialMode: AuthMode.signIn)),
+                  MaterialPageRoute(builder: (_) => const SignInScreen()),
                 );
               },
               child: Text(
@@ -338,6 +340,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
 
         _buildMenuOption(
+          icon: Icons.analytics_rounded,
+          title: 'Usage & Streaming Analytics',
+          subtitle: 'View watch time stats, top genres & bandwidth metrics',
+          onTap: () => _openUsageAnalyticsModal(context),
+        ),
+
+        _buildMenuOption(
+          icon: Icons.tune_rounded,
+          title: 'App & Streaming Settings',
+          subtitle: 'Quality preferences, audio spatialization & cache',
+          onTap: () => _openAppSettingsModal(context),
+        ),
+
+        _buildMenuOption(
           icon: Icons.shield_outlined,
           title: 'Email Security & Verification',
           subtitle: 'Your email address is secured',
@@ -376,7 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           subtitle: 'Sign in with another user or admin profile',
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AuthScreen(initialMode: AuthMode.signIn)),
+              MaterialPageRoute(builder: (_) => const SignInScreen()),
             );
           },
         ),
@@ -479,6 +495,331 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white30),
       ),
+    );
+  }
+
+  void _openUsageAnalyticsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0A0A0E),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(top: BorderSide(color: Color(0xFF27272A), width: 1)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.analytics_rounded, color: Color(0xFF00E5FF), size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    'USAGE & STREAMING ANALYTICS',
+                    style: AppFonts.sCoreDream(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Personalized telemetry & consumption insights across your devices',
+                style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 11),
+              ),
+              const Divider(color: Color(0xFF1F1F23), height: 24),
+              Expanded(
+                child: ListView(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF121216),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF27272A)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.timer_rounded, color: Colors.amber, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TOTAL WATCH TIME',
+                                style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '48 hrs 24 mins',
+                                style: AppFonts.sCoreDream(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+                              ),
+                              Text(
+                                '+6.2 hrs this week • Top 5% Cinephile',
+                                style: AppFonts.sCoreDream(color: Colors.white60, fontSize: 10.5),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'TOP GENRES WATCHED',
+                      style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGenreProgress('Sci-Fi & Cyberpunk', 0.45, '45%', Colors.cyanAccent),
+                    _buildGenreProgress('Drama & Masterpieces', 0.28, '28%', Colors.amber),
+                    _buildGenreProgress('Action & Thriller', 0.18, '18%', Colors.deepOrangeAccent),
+                    _buildGenreProgress('Animation & Anime', 0.09, '9%', Colors.purpleAccent),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        _buildMetricTile('AI CineBot Queries', '34 Requests', Icons.psychology_rounded, Colors.cyan),
+                        const SizedBox(width: 12),
+                        _buildMetricTile('Bandwidth Saved', '18.4 GB CDN', Icons.cloud_download_rounded, Colors.greenAccent),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildMetricTile('4K Ultra HD Ratio', '82% Direct', Icons.high_quality_rounded, Colors.amber),
+                        const SizedBox(width: 12),
+                        _buildMetricTile('Active Sessions', 'Web & Android', Icons.devices_rounded, Colors.white70),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGenreProgress(String genre, double progress, String percent, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(genre, style: AppFonts.sCoreDream(color: Colors.white70, fontSize: 12)),
+              Text(percent, style: AppFonts.sCoreDream(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: const Color(0xFF1E1E24),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile(String label, String val, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF121216),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF27272A)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 8),
+            Text(val, style: AppFonts.sCoreDream(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(label, style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAppSettingsModal(BuildContext context) {
+    bool autoplay = true;
+    bool spatialAudio = true;
+    bool hardwareAccel = true;
+    String selectedQuality = '4K Ultra HD (2160p)';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: const BoxDecoration(
+                color: Color(0xFF0A0A0E),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(top: BorderSide(color: Color(0xFF27272A), width: 1)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        'APP & STREAMING PREFERENCES',
+                        style: AppFonts.sCoreDream(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Configure playback quality, audio spatialization & local storage',
+                    style: AppFonts.sCoreDream(color: Colors.white54, fontSize: 11),
+                  ),
+                  const Divider(color: Color(0xFF1F1F23), height: 24),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Default Streaming Bitrate', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Master 60 FPS studio stream allocation', style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11)),
+                          trailing: DropdownButton<String>(
+                            dropdownColor: const Color(0xFF141418),
+                            value: selectedQuality,
+                            underline: const SizedBox(),
+                            style: AppFonts.sCoreDream(color: Colors.amber, fontSize: 11.5, fontWeight: FontWeight.bold),
+                            items: const [
+                              DropdownMenuItem(value: '4K Ultra HD (2160p)', child: Text('4K Ultra HD')),
+                              DropdownMenuItem(value: 'Full HD (1080p)', child: Text('1080p Full HD')),
+                              DropdownMenuItem(value: 'HD Ready (720p)', child: Text('720p HD')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => selectedQuality = val);
+                            },
+                          ),
+                        ),
+                        const Divider(color: Color(0xFF18181C)),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Autoplay Next Episode', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Seamless transition between TV series episodes', style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11)),
+                          value: autoplay,
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: const Color(0xFF3F3F46),
+                          onChanged: (val) => setModalState(() => autoplay = val),
+                        ),
+                        const Divider(color: Color(0xFF18181C)),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Dolby Atmos Spatial Audio', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Hardware spatial audio decoding for headphones', style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11)),
+                          value: spatialAudio,
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: const Color(0xFF3F3F46),
+                          onChanged: (val) => setModalState(() => spatialAudio = val),
+                        ),
+                        const Divider(color: Color(0xFF18181C)),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Hardware GPU Acceleration', style: AppFonts.sCoreDream(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text('Low-latency webGL & hardware video decoding', style: AppFonts.sCoreDream(color: Colors.white38, fontSize: 11)),
+                          value: hardwareAccel,
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: const Color(0xFF3F3F46),
+                          onChanged: (val) => setModalState(() => hardwareAccel = val),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF3F3F46)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            icon: const Icon(Icons.cleaning_services_rounded, size: 16, color: Colors.white70),
+                            label: Text(
+                              'CLEAR LOCAL CACHE & STORAGE (142 MB)',
+                              style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color(0xFF18181C),
+                                  content: Text('Cleared 142 MB cached assets & temporary data.', style: AppFonts.sCoreDream(color: Colors.white)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

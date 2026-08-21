@@ -303,44 +303,6 @@ class _SubscriptionModalState extends State<SubscriptionModal> with SingleTicker
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       children: [
-        // Mode Switch
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F0F12).withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF27272A)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.security_rounded, color: Colors.white70, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Paystack Mock / Test Mode',
-                    style: AppFonts.sCoreDream(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              Switch(
-                value: _mockMode,
-                activeColor: Colors.white,
-                activeTrackColor: const Color(0xFF3F3F46),
-                onChanged: (val) => setState(() => _mockMode = val),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
         // Plans Header
         Row(
           children: [

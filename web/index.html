@@ -26,6 +26,31 @@
   <title>Pure Cinema · Uncompromised 4K Streaming</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Paystack Official Inline JS SDK -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script>
+    window.payWithPaystackInline = function(key, email, amount, ref, onSuccess, onClose) {
+      try {
+        var handler = PaystackPop.setup({
+          key: key,
+          email: email,
+          amount: amount,
+          ref: ref,
+          currency: 'NGN',
+          onClose: function() {
+            if (onClose) onClose();
+          },
+          callback: function(response) {
+            if (onSuccess) onSuccess(response.reference || ref);
+          }
+        });
+        handler.openIframe();
+      } catch (err) {
+        console.error('Paystack Inline Error:', err);
+      }
+    };
+  </script>
+
   <style>
     :root, html, body {
       background-color: #050505 !important;

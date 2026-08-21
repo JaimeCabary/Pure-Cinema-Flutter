@@ -183,19 +183,15 @@ class AuthService {
         await _saveSession(user, data['token'] as String?);
         return {'success': true, 'user': user, 'message': data['message']};
       } else {
-        return {'success': false, 'error': data['error'] ?? 'Registration failed'};
+        final err = data['error'] ?? data['detail'] ?? 'Registration failed. Email may already be registered.';
+        return {'success': false, 'error': err};
       }
     } catch (e) {
-      debugPrint('Next.js API error during register: $e');
-      // Local fallback
-      final user = User(
-        id: 'usr_${cleanEmail.hashCode}',
-        email: cleanEmail,
-        name: name.trim().isNotEmpty ? name.trim() : cleanEmail.split('@')[0],
-        role: 'USER',
-      );
-      await _saveSession(user, 'pc_offline_token');
-      return {'success': true, 'user': user, 'isOffline': true};
+      debugPrint('API error during register: $e');
+      return {
+        'success': false,
+        'error': 'Unable to connect to authentication server. Please check your network connection.'
+      };
     }
   }
 

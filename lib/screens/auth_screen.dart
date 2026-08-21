@@ -28,6 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _otpController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -116,7 +117,8 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _handleRegister() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+    final password = _passwordController.text;
+    final confirm = _confirmPasswordController.text;
 
     if (email.isEmpty || !email.contains('@')) {
       setState(() => _errorMessage = 'Please enter a valid email address');
@@ -124,6 +126,10 @@ class _AuthScreenState extends State<AuthScreen> {
     }
     if (password.length < 6) {
       setState(() => _errorMessage = 'Password must be at least 6 characters');
+      return;
+    }
+    if (password != confirm) {
+      setState(() => _errorMessage = 'Passwords do not match. Please verify your password confirmation.');
       return;
     }
 

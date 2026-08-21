@@ -78,7 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  Future<void> _finishOnboarding({bool enterDirectly = false}) async {
+  Future<void> _finishOnboarding({bool enterDirectly = true}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_completed_onboarding', true);
 
@@ -249,86 +249,82 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // Primary Next / Paystack VIP Activation Button
-                if (isLastPage) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        elevation: 6,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                // Primary Action Button (CONTINUE / PAYSTACK VIP)
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: isLastPage
+                      ? ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            elevation: 6,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 20),
+                          onPressed: _openPaystackVIPModal,
+                          label: Text(
+                            'ACTIVATE VIP WITH PAYSTACK',
+                            style: AppFonts.sCoreDream(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        )
+                      : ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOutCubic,
+                            );
+                          },
+                          child: Text(
+                            'CONTINUE',
+                            style: AppFonts.sCoreDream(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
                         ),
+                ),
+                const SizedBox(height: 10),
+
+                // Secondary Action Button (EXPLORE AS GUEST - Constant on all slides)
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF333333)),
+                      backgroundColor: const Color(0x33141414),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      icon: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 20),
-                      onPressed: _openPaystackVIPModal,
-                      label: Text(
-                        'ACTIVATE VIP WITH PAYSTACK',
-                        style: AppFonts.sCoreDream(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
+                    ),
+                    onPressed: () => _finishOnboarding(),
+                    child: Text(
+                      'EXPLORE AS GUEST',
+                      style: AppFonts.sCoreDream(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF333333)),
-                        backgroundColor: const Color(0x33141414),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () => _finishOnboarding(),
-                      child: Text(
-                        'EXPLORE FREE CATALOGUE',
-                        style: AppFonts.sCoreDream(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOutCubic,
-                        );
-                      },
-                      child: Text(
-                        'CONTINUE',
-                        style: AppFonts.sCoreDream(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ],
             ),
           ),
