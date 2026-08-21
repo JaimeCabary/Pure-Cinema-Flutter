@@ -107,7 +107,7 @@ class AuthService:
         if not user_record:
             return AuthResponse(
                 success=False,
-                error="Account not found with this email. Please register first."
+                error="Account not found"
             )
 
         if not verify_password(password, user_record.hashed_password):

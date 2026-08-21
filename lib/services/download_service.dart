@@ -8,6 +8,7 @@ class DownloadItem {
   final String title;
   final String posterUrl;
   final String backdropUrl;
+  
   final String overview;
   final String videoUrl;
   final String fileSize;
